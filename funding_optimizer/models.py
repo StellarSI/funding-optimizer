@@ -10,6 +10,7 @@ callers retain control over execution.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 
 from funding_optimizer.errors import ValidationError
@@ -27,6 +28,8 @@ class Budget:
     def __post_init__(self) -> None:
         if isinstance(self.total, bool) or not isinstance(self.total, (int, float)):
             raise ValidationError("budget.total must be a number")
+        if not math.isfinite(self.total):
+            raise ValidationError("budget.total must be a finite number")
         if self.total <= 0:
             raise ValidationError("budget.total must be greater than zero")
         if not isinstance(self.asset, str) or not self.asset.strip():
