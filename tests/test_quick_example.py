@@ -20,9 +20,7 @@ def test_readme_quick_example() -> None:
         Program(id="health-gh", min_share=0.15, expected_reach=7_800),
     ]
 
-    plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(
-        budget, programs
-    )
+    plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(budget, programs)
     summary = plan.summary()
 
     assert "cash-transfers-ng" in summary
@@ -63,9 +61,7 @@ def test_regional_floor_binds() -> None:
         Program(id="west-a", min_share=0.0, expected_reach=100, region="west"),
     ]
 
-    plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(
-        budget, programs
-    )
+    plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(budget, programs)
     east_total = sum(a.share for a in plan.allocations if a.region == "east")
 
     assert east_total >= 0.5 - 1e-6

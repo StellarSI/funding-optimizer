@@ -90,9 +90,7 @@ class Program:
         if self.region is not None and (
             not isinstance(self.region, str) or not self.region.strip()
         ):
-            raise ValidationError(
-                f"program {self.id!r}: region must be a non-empty string or None"
-            )
+            raise ValidationError(f"program {self.id!r}: region must be a non-empty string or None")
         if isinstance(self.region, str):
             object.__setattr__(self, "region", self.region.strip())
 
