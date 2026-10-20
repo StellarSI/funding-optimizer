@@ -104,6 +104,21 @@ Allocation models affect real people. Treat outputs as decision support:
 - [ ] Integration with `fraud-detection-sdk` risk scores
 - [ ] Dashboard for funders
 
+## Development
+
+After the install steps above, set up the development dependencies and run the
+checks:
+
+```bash
+pip install -e ".[dev]"   # or: make install
+pre-commit install        # optional, runs lint/format on commit
+make check                # lint + typecheck + tests
+```
+
+Individual checks are `make lint`, `make format`, `make typecheck`, and
+`make test`. See [CONTRIBUTING.md](CONTRIBUTING.md) for the full workflow,
+branching model, and review expectations.
+
 ## Contributing
 
 Issues and PRs are welcome. Please open an issue first for larger changes. See `CONTRIBUTING.md`.
