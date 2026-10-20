@@ -11,16 +11,26 @@ callers retain control over execution.
 from __future__ import annotations
 
 import math
+import re
 from dataclasses import dataclass
 
 from funding_optimizer.errors import ValidationError
 
 __all__ = ["Allocation", "AllocationPlan", "Budget", "Program"]
 
+# Stellar asset codes are 1-12 alphanumeric characters. A classic asset
+# reference may append an ``:ISSUER`` account id.
+_ASSET_CODE_PATTERN = re.compile(r"[A-Z0-9]{1,12}(?::[A-Z0-9]{1,56})?", re.ASCII)
+
 
 @dataclass(frozen=True)
 class Budget:
-    """Total funds available to allocate across programs."""
+    """Total funds available to allocate across programs.
+
+    ``total`` must be a finite, strictly positive amount of ``asset``.
+    ``asset`` is normalized to uppercase and must be a Stellar asset code
+    (1-12 alphanumeric characters), optionally suffixed with ``:ISSUER``.
+    """
 
     total: float
     asset: str
@@ -32,9 +42,17 @@ class Budget:
             raise ValidationError("budget.total must be a finite number")
         if self.total <= 0:
             raise ValidationError("budget.total must be greater than zero")
-        if not isinstance(self.asset, str) or not self.asset.strip():
+        if not isinstance(self.asset, str):
             raise ValidationError("budget.asset must be a non-empty string")
-        object.__setattr__(self, "asset", self.asset.strip().upper())
+        asset = self.asset.strip().upper()
+        if not asset:
+            raise ValidationError("budget.asset must be a non-empty string")
+        if _ASSET_CODE_PATTERN.fullmatch(asset) is None:
+            raise ValidationError(
+                "budget.asset must be a Stellar asset code "
+                "(1-12 alphanumeric characters, optionally ':ISSUER')"
+            )
+        object.__setattr__(self, "asset", asset)
 
 
 @dataclass(frozen=True)
