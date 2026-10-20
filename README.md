@@ -77,6 +77,19 @@ plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(bu
 print(plan.summary())
 ```
 
+### Input validation
+
+`Budget` and `Program` validate their inputs and raise
+`funding_optimizer.errors.ValidationError` (a `ValueError`) on invalid data:
+
+- `Budget.total` must be a finite, strictly positive number.
+- `Budget.asset` is trimmed, uppercased, and must be a Stellar asset code
+  (1-12 alphanumeric characters), optionally suffixed with `:ISSUER`.
+- `Program.id` must be non-empty; surrounding whitespace is trimmed.
+- `Program.min_share` must be a finite fraction between `0` and `1`.
+- `Program.expected_reach` must be a non-negative integer.
+- `Program.region`, when provided, must be a non-empty string.
+
 ## Configuration
 
 | Variable | Description |
