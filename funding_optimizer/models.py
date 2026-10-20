@@ -10,16 +10,27 @@ callers retain control over execution.
 
 from __future__ import annotations
 
+import math
+import re
 from dataclasses import dataclass
 
 from funding_optimizer.errors import ValidationError
 
 __all__ = ["Allocation", "AllocationPlan", "Budget", "Program"]
 
+# Stellar asset codes are 1-12 alphanumeric characters. A classic asset
+# reference may append an ``:ISSUER`` account id.
+_ASSET_CODE_PATTERN = re.compile(r"[A-Z0-9]{1,12}(?::[A-Z0-9]{1,56})?", re.ASCII)
+
 
 @dataclass(frozen=True)
 class Budget:
-    """Total funds available to allocate across programs."""
+    """Total funds available to allocate across programs.
+
+    ``total`` must be a finite, strictly positive amount of ``asset``.
+    ``asset`` is normalized to uppercase and must be a Stellar asset code
+    (1-12 alphanumeric characters), optionally suffixed with ``:ISSUER``.
+    """
 
     total: float
     asset: str
@@ -27,16 +38,32 @@ class Budget:
     def __post_init__(self) -> None:
         if isinstance(self.total, bool) or not isinstance(self.total, (int, float)):
             raise ValidationError("budget.total must be a number")
+        if not math.isfinite(self.total):
+            raise ValidationError("budget.total must be a finite number")
         if self.total <= 0:
             raise ValidationError("budget.total must be greater than zero")
-        if not isinstance(self.asset, str) or not self.asset.strip():
+        if not isinstance(self.asset, str):
             raise ValidationError("budget.asset must be a non-empty string")
-        object.__setattr__(self, "asset", self.asset.strip().upper())
+        asset = self.asset.strip().upper()
+        if not asset:
+            raise ValidationError("budget.asset must be a non-empty string")
+        if _ASSET_CODE_PATTERN.fullmatch(asset) is None:
+            raise ValidationError(
+                "budget.asset must be a Stellar asset code "
+                "(1-12 alphanumeric characters, optionally ':ISSUER')"
+            )
+        object.__setattr__(self, "asset", asset)
 
 
 @dataclass(frozen=True)
 class Program:
-    """A candidate program that can receive part of the budget."""
+    """A candidate program that can receive part of the budget.
+
+    ``min_share`` is the minimum fraction of the budget in ``[0, 1]`` that
+    the optimizer must assign to the program. ``expected_reach`` is the
+    non-negative number of people the program expects to reach; it drives the
+    ``maximize_reach`` objective.
+    """
 
     id: str
     min_share: float = 0.0
@@ -50,6 +77,8 @@ class Program:
 
         if isinstance(self.min_share, bool) or not isinstance(self.min_share, (int, float)):
             raise ValidationError(f"program {self.id!r}: min_share must be a number")
+        if not math.isfinite(self.min_share):
+            raise ValidationError(f"program {self.id!r}: min_share must be a finite number")
         if not 0.0 <= self.min_share <= 1.0:
             raise ValidationError(f"program {self.id!r}: min_share must be between 0 and 1")
 
@@ -61,9 +90,7 @@ class Program:
         if self.region is not None and (
             not isinstance(self.region, str) or not self.region.strip()
         ):
-            raise ValidationError(
-                f"program {self.id!r}: region must be a non-empty string or None"
-            )
+            raise ValidationError(f"program {self.id!r}: region must be a non-empty string or None")
         if isinstance(self.region, str):
             object.__setattr__(self, "region", self.region.strip())
 
