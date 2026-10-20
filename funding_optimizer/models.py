@@ -57,7 +57,13 @@ class Budget:
 
 @dataclass(frozen=True)
 class Program:
-    """A candidate program that can receive part of the budget."""
+    """A candidate program that can receive part of the budget.
+
+    ``min_share`` is the minimum fraction of the budget in ``[0, 1]`` that
+    the optimizer must assign to the program. ``expected_reach`` is the
+    non-negative number of people the program expects to reach; it drives the
+    ``maximize_reach`` objective.
+    """
 
     id: str
     min_share: float = 0.0
@@ -71,6 +77,8 @@ class Program:
 
         if isinstance(self.min_share, bool) or not isinstance(self.min_share, (int, float)):
             raise ValidationError(f"program {self.id!r}: min_share must be a number")
+        if not math.isfinite(self.min_share):
+            raise ValidationError(f"program {self.id!r}: min_share must be a finite number")
         if not 0.0 <= self.min_share <= 1.0:
             raise ValidationError(f"program {self.id!r}: min_share must be between 0 and 1")
 
