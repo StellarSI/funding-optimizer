@@ -9,7 +9,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from funding_optimizer.errors import ValidationError
-from funding_optimizer.models import Allocation, AllocationPlan, Budget, Program
+from funding_optimizer.models import Budget, Program
+from funding_optimizer.plan import Allocation, AllocationPlan
 
 __all__ = ["Optimizer"]
 
