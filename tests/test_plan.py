@@ -7,6 +7,8 @@ output.
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 from funding_optimizer import Budget, Optimizer, Program
@@ -21,9 +23,7 @@ def test_allocation_plan_summary() -> None:
         Program(id="education-ke", min_share=0.10, expected_reach=4_500),
         Program(id="health-gh", min_share=0.15, expected_reach=7_800),
     ]
-    plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(
-        budget, programs
-    )
+    plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(budget, programs)
 
     summary = plan.summary()
     assert "Allocation plan (objective=maximize_reach, fairness=regional_floor)" in summary
@@ -80,8 +80,11 @@ def test_allocation_plan_is_frozen() -> None:
         total=100,
         allocations=(),
     )
+    # mypy rejects direct assignment to a frozen dataclass field, so go
+    # through an ``Any`` alias to keep the runtime assertion.
+    mutable_alias: Any = plan
     with pytest.raises(AttributeError):
-        plan.total = 200
+        mutable_alias.total = 200
 
 
 def test_allocation_plan_validates_via_optimizer() -> None:
