@@ -77,6 +77,35 @@ plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(bu
 print(plan.summary())
 ```
 
+### Optimize from the command line
+
+`optimize` reads a JSON problem, solves it, and writes the plan as JSON. It
+prints to stdout by default:
+
+```bash
+funding-optimizer optimize --input programs.json --output plan.json
+```
+
+`programs.json`:
+
+```json
+{
+  "objective": "maximize_reach",
+  "fairness": "regional_floor",
+  "budget": {"total": 250000, "asset": "USDC"},
+  "programs": [
+    {"id": "cash-transfers-ng", "min_share": 0.2, "expected_reach": 12000},
+    {"id": "education-ke", "min_share": 0.1, "expected_reach": 4500},
+    {"id": "health-gh", "min_share": 0.15, "expected_reach": 7800}
+  ]
+}
+```
+
+A top-level array of programs is also accepted; pass `--total` and `--asset`
+in that case. Use `--input -` to read stdin and `--output -` to write stdout.
+`--objective` and `--fairness` override the values in the file. The command
+only recommends allocations and never signs or submits payouts.
+
 ### Input validation
 
 `Budget` and `Program` validate their inputs and raise
@@ -98,6 +127,19 @@ print(plan.summary())
 | `HORIZON_URL` | Horizon endpoint for on-chain delivery data |
 | `ANALYTICS_API_URL` | Optional `transaction-analytics-api` base URL |
 | `DATABASE_URL` | Storage for runs, scenarios and reports |
+
+Load the settings with:
+
+```python
+from funding_optimizer.config import load_config
+
+config = load_config()
+```
+
+`STELLAR_NETWORK` and `HORIZON_URL` are required; `ANALYTICS_API_URL` and
+`DATABASE_URL` are optional. Network names and URLs are validated at startup.
+`repr(config)` and `config.safe_dict()` redact the database URL so credentials
+are not written to logs.
 
 ## Responsible use
 
