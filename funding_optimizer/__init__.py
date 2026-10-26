@@ -10,8 +10,24 @@ The public API matches the quick example in ``README.md``::
 
 from __future__ import annotations
 
+from funding_optimizer.config import (
+    Config,
+    Settings,
+    StellarNetwork,
+    load_config,
+    load_settings,
+)
 from funding_optimizer.models import Budget, Program
 from funding_optimizer.optimizer import Optimizer
 
-__all__ = ["Budget", "Program", "Optimizer"]
+__all__ = [
+    "Budget",
+    "Config",
+    "Optimizer",
+    "Program",
+    "Settings",
+    "StellarNetwork",
+    "load_config",
+    "load_settings",
+]
 __version__ = "0.1.0"
