@@ -45,7 +45,7 @@ def test_plan_round_trips_through_records_without_loss() -> None:
     assert run.asset == plan.asset
     assert float(run.total) == plan.total
     assert len(run.allocations) == len(plan.allocations)
-    for record, allocation in zip(run.allocations, plan.allocations):
+    for record, allocation in zip(run.allocations, plan.allocations, strict=True):
         assert record.program_id == allocation.program_id
         assert record.region == allocation.region
         assert record.expected_reach == allocation.expected_reach

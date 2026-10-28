@@ -15,7 +15,6 @@ Boundary rules (per the issue scope):
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Numeric, String, func
@@ -44,9 +43,7 @@ class OptimizationRunRecord(Base):
     fairness: Mapped[str] = mapped_column(String(64), nullable=False)
     asset: Mapped[str] = mapped_column(String(69), nullable=False)
     total: Mapped[float] = mapped_column(Numeric(20, 4), nullable=False)
-    unallocated: Mapped[float] = mapped_column(
-        Numeric(20, 4), nullable=False, default=0.0
-    )
+    unallocated: Mapped[float] = mapped_column(Numeric(20, 4), nullable=False, default=0.0)
     allocations: Mapped[list[AllocationRecord]] = relationship(
         back_populates="run",
         cascade="all, delete-orphan",
