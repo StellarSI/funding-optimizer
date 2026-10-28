@@ -11,8 +11,8 @@ from __future__ import annotations
 
 from funding_optimizer.optimizer.engine import FAIRNESS_MODES, OBJECTIVES, Optimizer
 from funding_optimizer.optimizer.solver import (
-    MaximizeReachSolveResult,
     MaximizeReachSolver,
+    MaximizeReachSolveResult,
     solve_maximize_reach,
 )
 
