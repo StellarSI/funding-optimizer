@@ -1,7 +1,9 @@
-"""Allocation solver.
+"""Shared allocation engine (moved from funding_optimizer/optimizer.py).
 
-The optimizer recommends how to split a budget across programs. It never
-signs or submits payouts; callers retain control over execution.
+The :class:`Optimizer` API is unchanged; this module now lives inside the
+:fmod:`funding_optimizer.optimizer` package so objective-specific solvers
+(such as :mod:`funding_optimizer.optimizer.solver`) can be added beside
+it. It never signs or submits payouts.
 """
 
 from __future__ import annotations

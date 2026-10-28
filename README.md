@@ -77,6 +77,55 @@ plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(bu
 print(plan.summary())
 ```
 
+plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(budget, programs)
+print(plan.summary())
+```
+
+### The maximize_reach objective
+
+`maximize_reach` binds every program's `min_share` floor and hands the
+remaining budget to the program with the largest `expected_reach` (the
+optimum of the linear reach model), tie-breaking deterministically by
+program id:
+
+```python
+from funding_optimizer import Budget, Program
+from funding_optimizer.optimizer import solve_maximize_reach
+
+plan = solve_maximize_reach(
+    Budget(total=250_000, asset="USDC"),
+    [
+        Program(id="cash-transfers-ng", min_share=0.20, expected_reach=12_000),
+        Program(id="education-ke", min_share=0.10, expected_reach=4_500),
+    ],
+)
+# shares: cash-transfers-ng 0.90, education-ke 0.10
+```
+
+Problems whose `min_share` values sum over 100% are infeasible; the solver
+fails with a diagnostic instead of returning a plan.</think><tool_call>edit<arg_key>newString</arg_key><arg_value>### maximize_reach solver
+
+`solve_maximize_reach` binds every program's `min_share` floor and hands
+the remaining budget to the program with the largest `expected_reach`
+(the optimum of the linear reach model), tie-breaking deterministically
+by program id:
+
+```python
+from funding_optimizer import Budget, Program
+from funding_optimizer.optimizer import solve_maximize_reach
+
+plan = solve_maximize_reach(
+    Budget(total=250_000, asset="USDC"),
+    [
+        Program(id="cash-transfers-ng", min_share=0.20, expected_reach=12_000),
+        Program(id="education-ke", min_share=0.10, expected_reach=4_500),
+    ],
+)
+```
+
+Infeasible problems (min_share floors summing over 100%) raise a
+diagnostic error rather than returning a plan.
+
 ### Optimize from the command line
 
 `optimize` reads a JSON problem, solves it, and writes the plan as JSON. It
