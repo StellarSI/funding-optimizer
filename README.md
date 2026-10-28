@@ -77,6 +77,55 @@ plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(bu
 print(plan.summary())
 ```
 
+plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(budget, programs)
+print(plan.summary())
+```
+
+### The maximize_reach objective
+
+`maximize_reach` binds every program's `min_share` floor and hands the
+remaining budget to the program with the largest `expected_reach` (the
+optimum of the linear reach model), tie-breaking deterministically by
+program id:
+
+```python
+from funding_optimizer import Budget, Program
+from funding_optimizer.optimizer import solve_maximize_reach
+
+plan = solve_maximize_reach(
+    Budget(total=250_000, asset="USDC"),
+    [
+        Program(id="cash-transfers-ng", min_share=0.20, expected_reach=12_000),
+        Program(id="education-ke", min_share=0.10, expected_reach=4_500),
+    ],
+)
+# shares: cash-transfers-ng 0.90, education-ke 0.10
+```
+
+Problems whose `min_share` values sum over 100% are infeasible; the solver
+fails with a diagnostic instead of returning a plan.</think><tool_call>edit<arg_key>newString</arg_key><arg_value>### maximize_reach solver
+
+`solve_maximize_reach` binds every program's `min_share` floor and hands
+the remaining budget to the program with the largest `expected_reach`
+(the optimum of the linear reach model), tie-breaking deterministically
+by program id:
+
+```python
+from funding_optimizer import Budget, Program
+from funding_optimizer.optimizer import solve_maximize_reach
+
+plan = solve_maximize_reach(
+    Budget(total=250_000, asset="USDC"),
+    [
+        Program(id="cash-transfers-ng", min_share=0.20, expected_reach=12_000),
+        Program(id="education-ke", min_share=0.10, expected_reach=4_500),
+    ],
+)
+```
+
+Infeasible problems (min_share floors summing over 100%) raise a
+diagnostic error rather than returning a plan.
+
 ### Optimize from the command line
 
 `optimize` reads a JSON problem, solves it, and writes the plan as JSON. It
@@ -105,6 +154,25 @@ A top-level array of programs is also accepted; pass `--total` and `--asset`
 in that case. Use `--input -` to read stdin and `--output -` to write stdout.
 `--objective` and `--fairness` override the values in the file. The command
 only recommends allocations and never signs or submits payouts.
+
+### Plan serialization (JSON Schema)
+
+Allocation plans serialize to a stable, published JSON contract so they can
+be stored, diffed, and validated across systems. The schema is
+`funding_optimizer/schemas/plan.schema.json`:
+
+```python
+from funding_optimizer.plan import AllocationPlan
+
+payload = plan.to_dict()        # schema-conformant dict
+text = plan.to_json()           # stable compact JSON
+restored = AllocationPlan.from_json(text)
+assert restored == plan
+```
+
+`from_dict`/`from_json` validate the payload against the schema and raise
+`ValidationError` on drift (unknown keys, out-of-range shares, unknown
+objectives), so malformed plans fail loudly at the boundary.
 
 ### Input validation
 

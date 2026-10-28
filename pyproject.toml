@@ -11,7 +11,10 @@ requires-python = ">=3.11"
 license = "MIT"
 authors = [{ name = "StellarSI" }]
 keywords = ["stellar", "grants", "disbursement", "optimization"]
-dependencies = []
+dependencies = [
+  # Persistence layer for optimization runs and plans (P06 / #9).
+  "sqlalchemy>=2.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/StellarSI/funding-optimizer"

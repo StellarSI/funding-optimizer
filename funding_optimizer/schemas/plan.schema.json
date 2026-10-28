@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/StellarSI/funding-optimizer/main/funding_optimizer/schemas/plan.schema.json",
+  "title": "AllocationPlan",
+  "description": "A redistribution plan produced by the funding-optimizer. Plans are recommendations only; they never sign or submit payouts.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["objective", "fairness", "asset", "total", "unallocated", "allocations"],
+  "properties": {
+    "objective": {
+      "description": "Objective the solver optimized for.",
+      "type": "string",
+      "enum": ["maximize_reach", "equal_share", "minimize_gap"]
+    },
+    "fairness": {
+      "description": "Fairness mode applied while solving.",
+      "type": "string",
+      "enum": ["none", "regional_floor"]
+    },
+    "asset": {
+      "description": "Stellar asset the budget is denominated in (optional ':ISSUER' suffix for classic assets).",
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 69
+    },
+    "total": {
+      "description": "Total budget available.",
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "unallocated": {
+      "description": "Portion of the budget the solver chose not to distribute.",
+      "type": "number",
+      "minimum": 0
+    },
+    "allocations": {
+      "description": "Per-program breakdown of the plan.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["program_id", "region", "share", "amount", "expected_reach"],
+        "properties": {
+          "program_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "region": {
+            "description": "Optional region grouping; null when unset.",
+            "type": ["string", "null"],
+            "minLength": 1
+          },
+          "share": {
+            "description": "Fraction of the budget assigned to the program, in [0, 1].",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "amount": {
+            "description": "Absolute amount assigned to the program, in `asset`.",
+            "type": "number",
+            "minimum": 0
+          },
+          "expected_reach": {
+            "description": "People the program expects to reach with this allocation.",
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      }
+    }
+  }
+}

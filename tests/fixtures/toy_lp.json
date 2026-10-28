@@ -1,0 +1,16 @@
+{
+  "description": "Toy linear program for the maximize_reach objective (issue #10). Known optimum: bind both min_share floors and hand the remainder to the highest-reach program, cash-transfers-ng. Total expected reach = 0.9*12000 + 0.1*4500 = 11250.",
+  "budget": {"total": 250000, "asset": "USDC"},
+  "objective": "maximize_reach",
+  "fairness": "none",
+  "programs": [
+    {"id": "cash-transfers-ng", "min_share": 0.2, "expected_reach": 12000, "region": "ng"},
+    {"id": "education-ke", "min_share": 0.1, "expected_reach": 4500, "region": "ke"}
+  ],
+  "expected_solution": {
+    "shares": {"cash-transfers-ng": 0.9, "education-ke": 0.1},
+    "amounts": {"cash-transfers-ng": 225000.0, "education-ke": 25000.0},
+    "expected_total_reach": 11250,
+    "binding_program_ids": ["education-ke"]
+  }
+}
