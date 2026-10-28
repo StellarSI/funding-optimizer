@@ -62,9 +62,10 @@ def test_run_record_converts_back_through_public_plan_shape() -> None:
 
 
 def test_map_tables_to_metadata() -> None:
-    Base.metadata.create_all(sa.create_engine("sqlite://"))
+    engine = sa.create_engine("sqlite://")
+    Base.metadata.create_all(engine)
 
-    with sa.create_engine("sqlite://").connect() as connection:
+    with engine.connect() as connection:
         names = sorted(sa.inspect(connection).get_table_names())
     assert "optimization_runs" in names
     assert "allocation_records" in names
@@ -80,10 +81,12 @@ def test_persisted_records_reappear_in_a_session(tmp_path: Path) -> None:
         session.add(run)
         session.commit()
         stored = session.get(OptimizationRunRecord, run.id)
+        # Read the lazy relationship while the session is still open.
+        assert stored is not None
+        rebuilt = plan_from_run(stored)
+        allocation_ids = [record.program_id for record in stored.allocations]
 
-    assert stored is not None
-    assert len(stored.allocations) == len(plan.allocations)
-    rebuilt = plan_from_run(stored)
+    assert allocation_ids == [allocation.program_id for allocation in plan.allocations]
     assert rebuilt == plan
 
 

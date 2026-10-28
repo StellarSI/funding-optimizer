@@ -88,7 +88,7 @@ class AllocationRecord(Base):
     @classmethod
     def from_allocation(cls, allocation: Allocation) -> AllocationRecord:
         """Build an unattached record from a single :class:`Allocation`."""
-        if not isinstance(allocation.program_id, str) or not allocation.program_id:
+        if not isinstance(allocation.program_id, str) or not allocation.program_id.strip():
             raise ValidationError("allocation.program_id must be a non-empty string")
         if not 0.0 <= allocation.share <= 1.0:
             raise ValidationError(

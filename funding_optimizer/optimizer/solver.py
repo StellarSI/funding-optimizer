@@ -130,7 +130,7 @@ class MaximizeReachSolver:
             if abs(shares[program.id] - program.min_share) < _EPSILON
         )
         expected_total_reach = sum(
-            int(shares[program.id] * program.expected_reach) for program in program_list
+            round(shares[program.id] * program.expected_reach) for program in program_list
         )
         return MaximizeReachSolveResult(
             _build_plan(budget, program_list, shares), binding, expected_total_reach
