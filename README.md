@@ -106,6 +106,25 @@ in that case. Use `--input -` to read stdin and `--output -` to write stdout.
 `--objective` and `--fairness` override the values in the file. The command
 only recommends allocations and never signs or submits payouts.
 
+### Plan serialization (JSON Schema)
+
+Allocation plans serialize to a stable, published JSON contract so they can
+be stored, diffed, and validated across systems. The schema is
+`funding_optimizer/schemas/plan.schema.json`:
+
+```python
+from funding_optimizer.plan import AllocationPlan
+
+payload = plan.to_dict()        # schema-conformant dict
+text = plan.to_json()           # stable compact JSON
+restored = AllocationPlan.from_json(text)
+assert restored == plan
+```
+
+`from_dict`/`from_json` validate the payload against the schema and raise
+`ValidationError` on drift (unknown keys, out-of-range shares, unknown
+objectives), so malformed plans fail loudly at the boundary.
+
 ### Input validation
 
 `Budget` and `Program` validate their inputs and raise
