@@ -31,9 +31,7 @@ def sample_plan() -> AllocationPlan:
         Program(id="education-ke", min_share=0.10, expected_reach=4_500),
         Program(id="health-gh", min_share=0.15, expected_reach=7_800),
     ]
-    return Optimizer(objective="maximize_reach", fairness="regional_floor").solve(
-        budget, programs
-    )
+    return Optimizer(objective="maximize_reach", fairness="regional_floor").solve(budget, programs)
 
 
 def test_plan_round_trips_through_records_without_loss() -> None:
@@ -60,9 +58,7 @@ def test_run_record_converts_back_through_public_plan_shape() -> None:
     assert restored.total == plan.total
     assert restored.unallocated == plan.unallocated
     assert restored.asset == plan.asset
-    assert [a.program_id for a in restored.allocations] == [
-        a.program_id for a in plan.allocations
-    ]
+    assert [a.program_id for a in restored.allocations] == [a.program_id for a in plan.allocations]
 
 
 def test_map_tables_to_metadata() -> None:

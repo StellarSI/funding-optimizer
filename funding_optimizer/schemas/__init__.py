@@ -72,14 +72,10 @@ def validate_payload(payload: Any, schema: dict[str, Any], path: str = "$") -> N
     if isinstance(payload, str):
         minimum_length = schema.get("minLength")
         if minimum_length is not None and len(payload) < minimum_length:
-            raise ValidationError(
-                f"{path}: string shorter than minLength {minimum_length}"
-            )
+            raise ValidationError(f"{path}: string shorter than minLength {minimum_length}")
         maximum_length = schema.get("maxLength")
         if maximum_length is not None and len(payload) > maximum_length:
-            raise ValidationError(
-                f"{path}: string longer than maxLength {maximum_length}"
-            )
+            raise ValidationError(f"{path}: string longer than maxLength {maximum_length}")
 
     if isinstance(payload, (int, float)) and not isinstance(payload, bool):
         minimum = schema.get("minimum")
@@ -90,14 +86,10 @@ def validate_payload(payload: Any, schema: dict[str, Any], path: str = "$") -> N
             raise ValidationError(f"{path}: {payload} is above maximum {maximum}")
         exclusive_minimum = schema.get("exclusiveMinimum")
         if exclusive_minimum is not None and payload <= exclusive_minimum:
-            raise ValidationError(
-                f"{path}: {payload} must be greater than {exclusive_minimum}"
-            )
+            raise ValidationError(f"{path}: {payload} must be greater than {exclusive_minimum}")
         exclusive_maximum = schema.get("exclusiveMaximum")
         if exclusive_maximum is not None and payload >= exclusive_maximum:
-            raise ValidationError(
-                f"{path}: {payload} must be less than {exclusive_maximum}"
-            )
+            raise ValidationError(f"{path}: {payload} must be less than {exclusive_maximum}")
 
     if isinstance(payload, dict):
         for required in schema.get("required", []):

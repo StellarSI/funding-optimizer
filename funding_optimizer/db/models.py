@@ -100,8 +100,7 @@ class AllocationRecord(Base):
             )
         if allocation.expected_reach < 0:
             raise ValidationError(
-                f"allocation for {allocation.program_id!r}: "
-                "expected_reach must be non-negative"
+                f"allocation for {allocation.program_id!r}: " "expected_reach must be non-negative"
             )
         return cls(
             program_id=allocation.program_id,

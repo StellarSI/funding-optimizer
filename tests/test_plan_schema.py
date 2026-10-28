@@ -20,9 +20,7 @@ PROGRAMS = [
 
 def sample_plan() -> AllocationPlan:
     """Solve the README quick example for use in round-trip tests."""
-    return Optimizer(objective="maximize_reach", fairness="regional_floor").solve(
-        BUDGET, PROGRAMS
-    )
+    return Optimizer(objective="maximize_reach", fairness="regional_floor").solve(BUDGET, PROGRAMS)
 
 
 def test_published_schema_loads_and_declares_plan_contract() -> None:
