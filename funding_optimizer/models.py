@@ -61,13 +61,16 @@ class Program:
     """A candidate program that can receive part of the budget.
 
     ``min_share`` is the minimum fraction of the budget in ``[0, 1]`` that
-    the optimizer must assign to the program. ``expected_reach`` is the
-    non-negative number of people the program expects to reach; it drives the
+    the optimizer must assign to the program. ``max_share`` is the maximum
+    fraction of the budget in ``[0, 1]`` that the optimizer may assign to
+    the program (issue #11). ``expected_reach`` is the non-negative number
+    of people the program expects to reach; it drives the
     ``maximize_reach`` objective.
     """
 
     id: str
     min_share: float = 0.0
+    max_share: float = 1.0
     expected_reach: int = 0
     region: str | None = None
 
@@ -82,6 +85,18 @@ class Program:
             raise ValidationError(f"program {self.id!r}: min_share must be a finite number")
         if not 0.0 <= self.min_share <= 1.0:
             raise ValidationError(f"program {self.id!r}: min_share must be between 0 and 1")
+
+        if isinstance(self.max_share, bool) or not isinstance(self.max_share, (int, float)):
+            raise ValidationError(f"program {self.id!r}: max_share must be a number")
+        if not math.isfinite(self.max_share):
+            raise ValidationError(f"program {self.id!r}: max_share must be a finite number")
+        if not 0.0 <= self.max_share <= 1.0:
+            raise ValidationError(f"program {self.id!r}: max_share must be between 0 and 1")
+        if self.max_share < self.min_share:
+            raise ValidationError(
+                f"program {self.id!r}: max_share {self.max_share} < min_share "
+                f"{self.min_share}: infeasible"
+            )
 
         if isinstance(self.expected_reach, bool) or not isinstance(self.expected_reach, int):
             raise ValidationError(f"program {self.id!r}: expected_reach must be an integer")
