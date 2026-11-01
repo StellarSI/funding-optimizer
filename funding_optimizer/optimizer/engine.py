@@ -12,6 +12,7 @@ from collections.abc import Iterable
 
 from funding_optimizer.errors import ValidationError
 from funding_optimizer.models import Budget, Program
+from funding_optimizer.optimizer.constraints import Constraints
 from funding_optimizer.plan import Allocation, AllocationPlan
 
 __all__ = ["Optimizer"]
@@ -37,7 +38,13 @@ class Optimizer:
         self.objective = objective
         self.fairness = fairness
 
-    def solve(self, budget: Budget, programs: Iterable[Program]) -> AllocationPlan:
+    def solve(
+        self,
+        budget: Budget,
+        programs: Iterable[Program],
+        *,
+        constraints: Constraints | None = None,
+    ) -> AllocationPlan:
         program_list = list(programs)
         if not program_list:
             raise ValidationError("at least one program is required")
@@ -54,6 +61,9 @@ class Optimizer:
             shares = self._distribute_remainder(program_list, shares, remainder)
         if self.fairness == "regional_floor":
             shares = self._apply_regional_floor(program_list, shares)
+        if constraints is not None:
+            constraints.validate(program_list)
+            shares = constraints.apply(shares, program_list)
         shares = self._sanitize(shares)
 
         allocations = self._build_allocations(budget, program_list, shares)

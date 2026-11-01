@@ -9,6 +9,11 @@ The optimizer recommends allocations. It never signs or submits payouts.
 
 from __future__ import annotations
 
+from funding_optimizer.optimizer.constraints import (
+    CapConstraint,
+    Constraints,
+    MinShareConstraint,
+)
 from funding_optimizer.optimizer.engine import FAIRNESS_MODES, OBJECTIVES, Optimizer
 from funding_optimizer.optimizer.solver import (
     MaximizeReachSolver,
@@ -17,9 +22,12 @@ from funding_optimizer.optimizer.solver import (
 )
 
 __all__ = [
+    "CapConstraint",
+    "Constraints",
     "FAIRNESS_MODES",
     "MaximizeReachSolveResult",
     "MaximizeReachSolver",
+    "MinShareConstraint",
     "OBJECTIVES",
     "Optimizer",
     "solve_maximize_reach",
