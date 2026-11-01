@@ -140,10 +140,11 @@ class Constraints:
     ) -> dict[str, float]:
         """Apply min-share floors then caps to a share allocation.
 
-        Min shares are applied first (raising any share below its floor),
-        then caps are applied (lowering any share above its cap). Excess
-        from capping is redistributed proportionally to uncapped programs
-        that still have headroom below their own caps.
+        Min shares are applied first (raising any share below its floor,
+        taking the deficit from programs above their floor), then caps are
+        applied (lowering any share above its cap, redistributing the excess
+        proportionally to programs below their cap). The total share always
+        sums to 1.0.
 
         Args:
             shares: Current per-program share allocation.
@@ -155,13 +156,16 @@ class Constraints:
         """
         result = dict(shares)
 
-        # 1. Apply min_share floors.
+        # 1. Apply min_share floors, taking deficit from programs above floor.
         for program in programs:
             pid = program.id
             floor = self.min_shares.get(pid, None)
             min_val = floor.min_share if floor else program.min_share
-            if result.get(pid, 0.0) < min_val:
+            current = result.get(pid, 0.0)
+            if current < min_val:
+                deficit = min_val - current
                 result[pid] = min_val
+                self._take_deficit(result, deficit, pid, programs)
 
         # 2. Apply caps, redistributing excess proportionally.
         for pid, cap in self.caps.items():
@@ -174,6 +178,39 @@ class Constraints:
 
         return result
 
+    def _take_deficit(
+        self,
+        shares: dict[str, float],
+        deficit: float,
+        protected_pid: str,
+        programs: list[Program],
+    ) -> None:
+        """Take ``deficit`` share from programs above their floor.
+
+        Deficit is taken proportionally from each program's headroom above
+        its own min_share floor, never from the program receiving the floor.
+        """
+        if deficit <= _EPSILON:
+            return
+
+        eligible: dict[str, float] = {}
+        for program in programs:
+            pid = program.id
+            if pid == protected_pid:
+                continue
+            floor = self.min_shares.get(pid, None)
+            min_val = floor.min_share if floor else program.min_share
+            headroom = shares.get(pid, 0.0) - min_val
+            if headroom > _EPSILON:
+                eligible[pid] = max(headroom, 0.0)
+
+        if not eligible:
+            return
+
+        total_headroom = sum(eligible.values())
+        for pid, headroom in eligible.items():
+            shares[pid] -= deficit * (headroom / total_headroom)
+
     def _redistribute_excess(
         self,
         shares: dict[str, float],
@@ -184,7 +221,8 @@ class Constraints:
         """Redistribute ``excess`` share from a capped program to others.
 
         Excess goes to programs that are not at their cap and not the
-        program that was just capped, proportional to their current share.
+        program that was just capped, proportional to their headroom below
+        their cap.
         """
         if excess <= _EPSILON:
             return
@@ -199,7 +237,6 @@ class Constraints:
                 eligible[pid] = max(headroom, 0.0)
 
         if not eligible:
-            # No room to redistribute; leave the excess unallocated.
             return
 
         total_headroom = sum(eligible.values())
