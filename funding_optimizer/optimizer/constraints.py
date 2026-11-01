@@ -92,14 +92,10 @@ class Constraints:
         # Constraints must reference known programs.
         for pid in self.caps:
             if pid not in program_ids:
-                raise ValidationError(
-                    f"cap references unknown program {pid!r}"
-                )
+                raise ValidationError(f"cap references unknown program {pid!r}")
         for pid in self.min_shares:
             if pid not in program_ids:
-                raise ValidationError(
-                    f"min_share constraint references unknown program {pid!r}"
-                )
+                raise ValidationError(f"min_share constraint references unknown program {pid!r}")
 
         # Cap must not be below the program's min_share.
         for pid in self.caps:
@@ -131,13 +127,10 @@ class Constraints:
         total_min = sum(p.min_share for p in programs)
         if total_min > 1.0 + _EPSILON:
             raise AllocationError(
-                f"min_share values sum to {total_min:.4f}, more than 100% "
-                "of the budget"
+                f"min_share values sum to {total_min:.4f}, more than 100% " "of the budget"
             )
 
-    def apply(
-        self, shares: dict[str, float], programs: list[Program]
-    ) -> dict[str, float]:
+    def apply(self, shares: dict[str, float], programs: list[Program]) -> dict[str, float]:
         """Apply min-share floors then caps to a share allocation.
 
         Min shares are applied first (raising any share below its floor,
