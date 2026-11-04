@@ -7,7 +7,6 @@ imports ``scipy`` directly.
 from __future__ import annotations
 
 import numpy as np
-import pytest
 
 from funding_optimizer.optimizer.solver import HiGHSolver, SolverResult
 

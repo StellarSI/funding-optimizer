@@ -12,7 +12,6 @@ submits payouts.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 from scipy.optimize import linprog
@@ -25,9 +24,9 @@ class SolverResult:
     success: bool
     status: int
     message: str
-    objective_value: Optional[float]
-    allocation: Optional[np.ndarray]
-    iterations: Optional[int] = None
+    objective_value: float | None
+    allocation: np.ndarray | None
+    iterations: int | None = None
 
 
 class Solver:
@@ -37,11 +36,11 @@ class Solver:
         self,
         c: np.ndarray,
         *,
-        A_ub: Optional[np.ndarray] = None,
-        b_ub: Optional[np.ndarray] = None,
-        A_eq: Optional[np.ndarray] = None,
-        b_eq: Optional[np.ndarray] = None,
-        bounds: Optional[list[tuple[Optional[float], Optional[float]]]] = None,
+        A_ub: np.ndarray | None = None,
+        b_ub: np.ndarray | None = None,
+        A_eq: np.ndarray | None = None,
+        b_eq: np.ndarray | None = None,
+        bounds: list[tuple[float | None, float | None]] | None = None,
     ) -> SolverResult:
         """Solve ``min c^T x`` subject to the supplied linear constraints.
 
@@ -74,7 +73,7 @@ class HiGHSolver(Solver):
         *,
         mip_rel_gap: float = 0.0,
         presolve: bool = True,
-        time_limit: Optional[float] = None,
+        time_limit: float | None = None,
         dual_feasibility_tolerance: float = 1e-9,
         primal_feasibility_tolerance: float = 1e-9,
         ipm_optimality_tolerance: float = 1e-9,
@@ -93,11 +92,11 @@ class HiGHSolver(Solver):
         self,
         c: np.ndarray,
         *,
-        A_ub: Optional[np.ndarray] = None,
-        b_ub: Optional[np.ndarray] = None,
-        A_eq: Optional[np.ndarray] = None,
-        b_eq: Optional[np.ndarray] = None,
-        bounds: Optional[list[tuple[Optional[float], Optional[float]]]] = None,
+        A_ub: np.ndarray | None = None,
+        b_ub: np.ndarray | None = None,
+        A_eq: np.ndarray | None = None,
+        b_eq: np.ndarray | None = None,
+        bounds: list[tuple[float | None, float | None]] | None = None,
     ) -> SolverResult:
         if bounds is None:
             bounds = [(0.0, None)] * int(np.asarray(c).size)
@@ -113,11 +112,11 @@ class HiGHSolver(Solver):
             options=self._options,
         )
 
-        allocation: Optional[np.ndarray] = None
+        allocation: np.ndarray | None = None
         if result.x is not None:
             allocation = np.asarray(result.x, dtype=float)
 
-        objective_value: Optional[float] = None
+        objective_value: float | None = None
         if result.fun is not None:
             objective_value = float(result.fun)
 

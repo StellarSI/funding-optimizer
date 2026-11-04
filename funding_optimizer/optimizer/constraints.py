@@ -12,11 +12,10 @@ never signs or submits payouts.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
 
 import numpy as np
 
-from .solver import HiGHSolver, Solver
+from .solver import HiGHSolver, Solver, SolverResult
 
 
 @dataclass(frozen=True)
@@ -115,9 +114,7 @@ def regional_floor_constraints(
     return np.array(rows, dtype=float), np.array(lower_bounds, dtype=float)
 
 
-def budget_constraint(
-    programs: list[Program], budget: float
-) -> tuple[np.ndarray, np.ndarray]:
+def budget_constraint(programs: list[Program], budget: float) -> tuple[np.ndarray, np.ndarray]:
     """Equality constraint ``sum(x) == budget`` allocating the full budget."""
     n = len(programs)
     return np.ones((1, n), dtype=float), np.array([float(budget)], dtype=float)
@@ -152,7 +149,7 @@ def solve_allocation(
     budget: float,
     region_floors: list[RegionFloor],
     *,
-    solver: Optional[Solver] = None,
+    solver: Solver | None = None,
 ) -> SolverResult:
     """Build and solve the regional-floor allocation problem.
 

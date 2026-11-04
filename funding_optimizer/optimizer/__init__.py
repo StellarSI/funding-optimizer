@@ -14,13 +14,13 @@ from .constraints import (
 from .solver import HiGHSolver, Solver, SolverResult
 
 __all__ = [
-    "Solver",
     "HiGHSolver",
-    "SolverResult",
     "Program",
     "RegionFloor",
+    "Solver",
+    "SolverResult",
+    "build_allocation_problem",
     "maximize_reach_objective",
     "regional_floor_constraints",
-    "build_allocation_problem",
     "solve_allocation",
 ]
