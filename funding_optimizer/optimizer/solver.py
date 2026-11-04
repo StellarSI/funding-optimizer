@@ -1,186 +1,131 @@
-"""The ``maximize_reach`` objective (issue #10).
+"""Deterministic linear-programming solver adapter.
 
-Implements the allocation-optimization capability promised by
-``README.md:19`` and exercised in the README quick example
-(``README.md:76``) at the named target path
-``funding_optimizer/optimizer/solver.py``.
+Wraps SciPy's HiGHS LP solver behind a narrow, deterministic adapter interface.
+Solver options are pinned so that repeated calls with identical inputs produce
+identical outputs, making constrained allocation runs reproducible and auditable.
 
-Model (the toy linear program, ``README §Features — Allocation
-optimization``): maximize the total expected reach
-
-    maximize  sum_i share_i * expected_reach_i
-    s.t.      share_i >= min_share_i for every program i
-              sum_i share_i = 1
-              share_i >= 0
-
-``expected_reach_i`` is the reach the program projects for the whole
-budget; reach scales linearly with the share it receives. The optimum is
-then straightforward: bind every ``min_share`` floor, and hand the
-remaining budget to the program with the largest ``expected_reach``
-(fractional-knapsack greedy, provably optimal for this LP). Ties between
-equal-reach programs break by ascending program id so answers are
-reproducible run over run (matching #11's determinism contract).
-
-The solver produces a full :class:`~funding_optimizer.plan.AllocationPlan`
-— a recommendation — and never signs or submits payouts.
+SciPy/HiGHS is fully isolated behind this adapter: no other module imports
+``scipy`` directly. The optimizer recommends allocations and never signs or
+submits payouts.
 """
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from dataclasses import dataclass
+from typing import Optional
 
-from funding_optimizer.errors import AllocationError, ValidationError
-from funding_optimizer.models import Budget, Program
-from funding_optimizer.plan import Allocation, AllocationPlan
-
-__all__ = [
-    "MaximizeReachSolveResult",
-    "MaximizeReachSolver",
-    "solve_maximize_reach",
-]
-
-_EPSILON = 1e-9
+import numpy as np
+from scipy.optimize import linprog
 
 
-class MaximizeReachSolveResult:
-    """Diagnostic wrapper around a solved maximize_reach problem.
+@dataclass(frozen=True)
+class SolverResult:
+    """Outcome of a bounded linear program."""
 
-    Exposes the optimal plan plus solver reasoning: the binding
-    constraints (programs stuck at their ``min_share`` floor) and the
-    expected total reach of the plan.
+    success: bool
+    status: int
+    message: str
+    objective_value: Optional[float]
+    allocation: Optional[np.ndarray]
+    iterations: Optional[int] = None
+
+
+class Solver:
+    """Narrow adapter interface for deterministic linear programs."""
+
+    def solve(
+        self,
+        c: np.ndarray,
+        *,
+        A_ub: Optional[np.ndarray] = None,
+        b_ub: Optional[np.ndarray] = None,
+        A_eq: Optional[np.ndarray] = None,
+        b_eq: Optional[np.ndarray] = None,
+        bounds: Optional[list[tuple[Optional[float], Optional[float]]]] = None,
+    ) -> SolverResult:
+        """Solve ``min c^T x`` subject to the supplied linear constraints.
+
+        Parameters
+        ----------
+        c:
+            Linear objective coefficients (minimized). To maximize reach, pass
+            the negative of the per-unit reach values.
+        A_ub, b_ub:
+            Inequality constraints ``A_ub @ x <= b_ub``.
+        A_eq, b_eq:
+            Equality constraints ``A_eq @ x == b_eq``.
+        bounds:
+            Per-variable ``(min, max)`` bounds. Use ``None`` for an unbounded
+            end. When omitted, every variable defaults to ``[0, None)``, which
+            is appropriate for allocation amounts.
+        """
+        raise NotImplementedError
+
+
+class HiGHSolver(Solver):
+    """Deterministic HiGHS-backed linear-programming solver.
+
+    Pins HiGHS options so repeated runs are reproducible. SciPy/HiGHS is
+    isolated behind the :class:`Solver` adapter interface.
     """
 
     def __init__(
         self,
-        plan: AllocationPlan,
-        binding_program_ids: tuple[str, ...],
-        expected_total_reach: int,
+        *,
+        mip_rel_gap: float = 0.0,
+        presolve: bool = True,
+        time_limit: Optional[float] = None,
+        dual_feasibility_tolerance: float = 1e-9,
+        primal_feasibility_tolerance: float = 1e-9,
+        ipm_optimality_tolerance: float = 1e-9,
     ) -> None:
-        self.plan = plan
-        self.binding_program_ids = binding_program_ids
-        self.expected_total_reach = expected_total_reach
-
-    def diagnostic(self) -> str:
-        """Return a human-readable infeasibility/explanatory diagnostic."""
-        binding = ", ".join(self.binding_program_ids) or "none"
-        return (
-            f"objective=maximize_reach, expected_total_reach={self.expected_total_reach:,}, "
-            f"binding_min_share_programs=[{binding}]"
-        )
-
-
-class MaximizeReachSolver:
-    """Solve the maximize_reach linear program for a budget and programs.
-
-    Deterministic adapter: coroutine-free, pure, and reproducible — the
-    same problem always yields the same plan (P14 contract).
-    """
+        self._options: dict[str, object] = {
+            "mip_rel_gap": float(mip_rel_gap),
+            "presolve": bool(presolve),
+        }
+        if time_limit is not None:
+            self._options["time_limit"] = float(time_limit)
+        self._options["dual_feasibility_tolerance"] = float(dual_feasibility_tolerance)
+        self._options["primal_feasibility_tolerance"] = float(primal_feasibility_tolerance)
+        self._options["ipm_optimality_tolerance"] = float(ipm_optimality_tolerance)
 
     def solve(
         self,
-        budget: Budget,
-        programs: Iterable[Program],
+        c: np.ndarray,
         *,
-        fairness: str = "none",
-    ) -> MaximizeReachSolveResult:
-        """Compute the reach-maximizing allocation plan.
+        A_ub: Optional[np.ndarray] = None,
+        b_ub: Optional[np.ndarray] = None,
+        A_eq: Optional[np.ndarray] = None,
+        b_eq: Optional[np.ndarray] = None,
+        bounds: Optional[list[tuple[Optional[float], Optional[float]]]] = None,
+    ) -> SolverResult:
+        if bounds is None:
+            bounds = [(0.0, None)] * int(np.asarray(c).size)
 
-        Raises:
-            ValidationError: When the problems have conflicting filters
-                (e.g. fairness is not ``none``), no programs, duplicate
-                ids, or infeasible floors — infeasible problems surface
-                as :class:`~funding_optimizer.errors.AllocationError`
-                with an explanatory diagnostic instead of ad-hoc numbers.
-        """
-        if fairness != "none":
-            raise ValidationError(
-                "maximize_reach supports fairness='none'; use the Optimizer engine "
-                "with fairness='regional_floor' for fairness-constrained solves"
-            )
-
-        program_list = list(programs)
-        if not program_list:
-            raise ValidationError("at least one program is required")
-
-        ids = {program.id for program in program_list}
-        if len(ids) != len(program_list):
-            raise ValidationError("program ids must be unique")
-
-        total_min = sum(program.min_share for program in program_list)
-        if total_min > 1.0 + _EPSILON:
-            raise AllocationError(
-                "maximize_reach problem is infeasible: min_share values sum to "
-                f"{total_min:.4f}, more than 100% of the budget"
-            )
-
-        # Bind every min_share floor.
-        shares = {program.id: program.min_share for program in program_list}
-        remainder = 1.0 - sum(shares.values())
-
-        # The rest goes to the highest-reach program (LP optimum for the
-        # linear reach model); ties break by ascending program id.
-        best_reach = max(program.expected_reach for program in program_list)
-        leaders = [program for program in program_list if program.expected_reach == best_reach]
-        lead = min(leaders, key=lambda program: program.id)
-        shares[lead.id] += remainder
-
-        binding = tuple(
-            program.id
-            for program in program_list
-            if abs(shares[program.id] - program.min_share) < _EPSILON
-        )
-        expected_total_reach = sum(
-            round(shares[program.id] * program.expected_reach) for program in program_list
-        )
-        return MaximizeReachSolveResult(
-            _build_plan(budget, program_list, shares), binding, expected_total_reach
+        result = linprog(
+            c=np.asarray(c, dtype=float),
+            A_ub=None if A_ub is None else np.asarray(A_ub, dtype=float),
+            b_ub=None if b_ub is None else np.asarray(b_ub, dtype=float),
+            A_eq=None if A_eq is None else np.asarray(A_eq, dtype=float),
+            b_eq=None if b_eq is None else np.asarray(b_eq, dtype=float),
+            bounds=bounds,
+            method="highs",
+            options=self._options,
         )
 
+        allocation: Optional[np.ndarray] = None
+        if result.x is not None:
+            allocation = np.asarray(result.x, dtype=float)
 
-def solve_maximize_reach(
-    budget: Budget,
-    programs: Iterable[Program],
-) -> AllocationPlan:
-    """Solve maximize_reach and return only the allocation plan."""
-    return MaximizeReachSolver().solve(budget, programs).plan
+        objective_value: Optional[float] = None
+        if result.fun is not None:
+            objective_value = float(result.fun)
 
-
-def _build_plan(
-    budget: Budget, programs: list[Program], shares: dict[str, float]
-) -> AllocationPlan:
-    """Assemble the deterministic AllocationPlan (same rules as the engine)."""
-    allocations: list[Allocation] = []
-    running = 0.0
-    for program in programs:
-        amount = round(budget.total * shares[program.id], 2)
-        running += amount
-        allocations.append(
-            Allocation(
-                program_id=program.id,
-                region=program.region,
-                share=round(shares[program.id], 6),
-                amount=amount,
-                expected_reach=program.expected_reach,
-            )
+        return SolverResult(
+            success=bool(result.success),
+            status=int(result.status),
+            message=str(result.message),
+            objective_value=objective_value,
+            allocation=allocation,
+            iterations=getattr(result, "nit", None),
         )
-
-    if allocations:
-        drift = round(budget.total - running, 2)
-        last = allocations[-1]
-        allocations[-1] = Allocation(
-            program_id=last.program_id,
-            region=last.region,
-            share=last.share,
-            amount=round(last.amount + drift, 2),
-            expected_reach=last.expected_reach,
-        )
-
-    allocated = round(sum(allocation.amount for allocation in allocations), 2)
-    return AllocationPlan(
-        objective="maximize_reach",
-        fairness="none",
-        asset=budget.asset,
-        total=budget.total,
-        allocations=tuple(allocations),
-        unallocated=round(budget.total - allocated, 2),
-    )
