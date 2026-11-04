@@ -15,7 +15,7 @@ def _solver() -> HiGHSolver:
     return HiGHSolver()
 
 
-def test_maximize_simple_objective_happy_path():
+def test_maximize_simple_objective_happy_path() -> None:
     """maximize 3x + 2y subject to x + y <= 10, x <= 6, x,y >= 0.
 
     Optimum: x = 6, y = 4, objective = 26 (linprog minimizes -26).
@@ -35,7 +35,7 @@ def test_maximize_simple_objective_happy_path():
     assert np.isclose(result.objective_value, -26.0, atol=1e-6)
 
 
-def test_infeasible_problem_reports_failure():
+def test_infeasible_problem_reports_failure() -> None:
     """x + y <= -1 with x, y >= 0 is infeasible."""
     solver = _solver()
     c = np.array([-1.0, -1.0])
@@ -48,7 +48,7 @@ def test_infeasible_problem_reports_failure():
     assert result.status != 0
 
 
-def test_deterministic_repeated_runs_agree():
+def test_deterministic_repeated_runs_agree() -> None:
     """Identical inputs must produce identical allocations (reproducibility)."""
     solver = _solver()
     c = np.array([-4.0, -1.0, -2.0])
@@ -64,13 +64,13 @@ def test_deterministic_repeated_runs_agree():
     assert np.isclose(first.objective_value, second.objective_value, atol=1e-9)
 
 
-def test_variable_bounds_respected():
+def test_variable_bounds_respected() -> None:
     """Upper bound x <= 3 is honored even though the objective wants more x."""
     solver = _solver()
     c = np.array([-10.0, -1.0])
     a_ub = np.array([[1.0, 1.0]])
     b_ub = np.array([100.0])
-    bounds = [(0.0, 3.0), (0.0, None)]
+    bounds: list[tuple[float | None, float | None]] = [(0.0, 3.0), (0.0, None)]
 
     result = solver.solve(c, A_ub=a_ub, b_ub=b_ub, bounds=bounds)
 

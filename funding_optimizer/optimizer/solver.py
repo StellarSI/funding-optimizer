@@ -14,7 +14,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.optimize import linprog
+from scipy.optimize import linprog  # type: ignore[import-untyped]
 
 
 @dataclass(frozen=True)

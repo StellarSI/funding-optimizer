@@ -20,7 +20,7 @@ from funding_optimizer.optimizer.constraints import (
 )
 
 
-def _programs():
+def _programs() -> list[Program]:
     return [
         Program(id="edu", region="Africa", expected_reach=10.0, min_share=0.10),
         Program(id="health", region="Africa", expected_reach=6.0, min_share=0.0),
@@ -28,20 +28,20 @@ def _programs():
     ]
 
 
-def _floors():
+def _floors() -> list[RegionFloor]:
     return [
         RegionFloor(region="Africa", floor=0.30),
         RegionFloor(region="Asia", floor=0.20),
     ]
 
 
-def test_maximize_reach_objective_is_negated_reach():
+def test_maximize_reach_objective_is_negated_reach() -> None:
     programs = _programs()
     c = maximize_reach_objective(programs)
     assert np.allclose(c, [-10.0, -6.0, -8.0])
 
 
-def test_regional_floor_constraints_shape():
+def test_regional_floor_constraints_shape() -> None:
     programs = _programs()
     a_ub, b_ub = regional_floor_constraints(programs, 100.0, _floors())
     # Two region floors + one program min_share (edu >= 0.10 * 100).
@@ -49,7 +49,7 @@ def test_regional_floor_constraints_shape():
     assert b_ub.shape == (3,)
 
 
-def test_regional_floor_allocation_satisfies_floors():
+def test_regional_floor_allocation_satisfies_floors() -> None:
     result = solve_allocation(_programs(), 100.0, _floors())
 
     assert result.success is True
@@ -72,7 +72,7 @@ def test_regional_floor_allocation_satisfies_floors():
     assert np.isclose(result.objective_value, -960.0, atol=1e-6)
 
 
-def test_no_region_floors_still_allocates_full_budget():
+def test_no_region_floors_still_allocates_full_budget() -> None:
     result = solve_allocation(_programs(), 100.0, [])
     assert result.success is True
     assert result.allocation is not None
@@ -81,7 +81,7 @@ def test_no_region_floors_still_allocates_full_budget():
     assert np.isclose(result.allocation[0], 100.0, atol=1e-6)
 
 
-def test_regional_floors_exceeding_budget_raise():
+def test_regional_floors_exceeding_budget_raise() -> None:
     programs = _programs()
     bad_floors = [
         RegionFloor(region="Africa", floor=0.60),
