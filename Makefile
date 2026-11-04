@@ -1,21 +1,14 @@
-.PHONY: install check lint format typecheck test clean
+.PHONY: check lint test
 
-install:
-	python -m pip install -e ".[dev]"
+# Run the full verification pipeline: linting, formatting check, type-checking,
+# and the test suite. Equivalent to the Ruff, Black, mypy and pytest commands
+# referenced by the optimizer issues until a formal `make check` is defined.
+check: lint test
 
 lint:
 	ruff check funding_optimizer tests
-
-format:
-	black funding_optimizer tests
-
-typecheck:
-	mypy funding_optimizer tests
+	black --check funding_optimizer tests
+	mypy funding_optimizer
 
 test:
-	pytest
-
-check: lint typecheck test
-
-clean:
-	rm -rf .venv build dist *.egg-info .pytest_cache .mypy_cache .ruff_cache
+	pytest -q

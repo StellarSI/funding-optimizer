@@ -1,1 +1,1 @@
-"""Test suite for funding-optimizer."""
+"""Package tests for funding-optimizer."""

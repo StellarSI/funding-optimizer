@@ -1,34 +1,26 @@
-"""Allocation optimizer package.
+"""Deterministic allocation optimizer building blocks.
 
-Re-exports the shared :class:`Optimizer` engine (now
-:mod:`funding_optimizer.optimizer.engine`) plus objective-specific
-solvers such as :mod:`funding_optimizer.optimizer.solver`.
-
-The optimizer recommends allocations. It never signs or submits payouts.
+The optimizer recommends allocations and never signs or submits payouts.
 """
 
-from __future__ import annotations
-
-from funding_optimizer.optimizer.constraints import (
-    CapConstraint,
-    Constraints,
-    MinShareConstraint,
+from .constraints import (
+    Program,
+    RegionFloor,
+    build_allocation_problem,
+    maximize_reach_objective,
+    regional_floor_constraints,
+    solve_allocation,
 )
-from funding_optimizer.optimizer.engine import FAIRNESS_MODES, OBJECTIVES, Optimizer
-from funding_optimizer.optimizer.solver import (
-    MaximizeReachSolver,
-    MaximizeReachSolveResult,
-    solve_maximize_reach,
-)
+from .solver import HiGHSolver, Solver, SolverResult
 
 __all__ = [
-    "CapConstraint",
-    "Constraints",
-    "FAIRNESS_MODES",
-    "MaximizeReachSolveResult",
-    "MaximizeReachSolver",
-    "MinShareConstraint",
-    "OBJECTIVES",
-    "Optimizer",
-    "solve_maximize_reach",
+    "HiGHSolver",
+    "Program",
+    "RegionFloor",
+    "Solver",
+    "SolverResult",
+    "build_allocation_problem",
+    "maximize_reach_objective",
+    "regional_floor_constraints",
+    "solve_allocation",
 ]

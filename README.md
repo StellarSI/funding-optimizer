@@ -43,6 +43,40 @@ Stellar is widely used for low-cost, near-instant cross-border payments and stab
 
 The optimizer **recommends**. It never moves funds on its own. Payouts remain under your control via SDP or your own signing flow.
 
+## Allocation optimizer
+
+The optimizer ships two deterministic, testable building blocks under
+``funding_optimizer/optimizer``:
+
+* ``solver.py`` — a deterministic linear-programming adapter (issue #14) that
+  wraps SciPy/HiGHS behind a narrow interface. Solver options are pinned so
+  repeated runs with identical inputs produce identical allocations.
+* ``constraints.py`` — regional-floor fairness constraints (issue #13) plus a
+  reach-maximizing objective, expressed as separate linear pieces.
+
+Both are verified by tests under ``tests/`` and the project lints, type-checks
+and tests cleanly with ``make check``.
+
+```python
+from funding_optimizer.optimizer.constraints import (
+    Program,
+    RegionFloor,
+    solve_allocation,
+)
+
+programs = [
+    Program(id="cash-transfers-ng", region="Africa", expected_reach=12_000, min_share=0.20),
+    Program(id="education-ke", region="Africa", expected_reach=4_500, min_share=0.10),
+    Program(id="health-gh", region="Africa", expected_reach=7_800, min_share=0.15),
+]
+
+result = solve_allocation(programs, budget=250_000, region_floors=[
+    RegionFloor(region="Africa", floor=0.50),
+])
+print(result.allocation)   # deterministic allocation vector
+print(result.objective_value)
+```
+
 ## Getting started
 
 ### Prerequisites
@@ -220,7 +254,7 @@ Allocation models affect real people. Treat outputs as decision support:
 
 ## Roadmap
 
-- [ ] Constraint-based allocation solver
+- [x] Constraint-based allocation solver
 - [ ] Delivery-time and cash-out forecasting
 - [ ] Scenario comparison reports
 - [ ] SDP-compatible disbursement file export
