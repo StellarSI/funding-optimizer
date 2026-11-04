@@ -60,6 +60,8 @@ def test_deterministic_repeated_runs_agree() -> None:
 
     assert first.success is True and second.success is True
     assert first.allocation is not None and second.allocation is not None
+    assert first.objective_value is not None
+    assert second.objective_value is not None
     assert np.allclose(first.allocation, second.allocation, atol=1e-9)
     assert np.isclose(first.objective_value, second.objective_value, atol=1e-9)
 
@@ -76,6 +78,7 @@ def test_variable_bounds_respected() -> None:
 
     assert result.success is True
     assert result.allocation is not None
+    assert result.objective_value is not None
     assert np.isclose(result.allocation[0], 3.0, atol=1e-6)
     assert np.isclose(result.allocation[1], 97.0, atol=1e-6)
     assert np.isclose(result.objective_value, -(10.0 * 3.0 + 1.0 * 97.0), atol=1e-6)

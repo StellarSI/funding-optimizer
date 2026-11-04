@@ -69,6 +69,7 @@ def test_regional_floor_allocation_satisfies_floors() -> None:
     assert np.isclose(edu, 80.0, atol=1e-6)
     assert np.isclose(health, 0.0, atol=1e-6)
     assert np.isclose(cash, 20.0, atol=1e-6)
+    assert result.objective_value is not None
     assert np.isclose(result.objective_value, -960.0, atol=1e-6)
 
 
