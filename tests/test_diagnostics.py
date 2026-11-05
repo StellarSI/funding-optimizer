@@ -95,9 +95,7 @@ def test_program_minimums_exceeding_budget_are_diagnosed() -> None:
 
     codes = [diagnostic.code for diagnostic in diagnostics]
     assert "floors_exceed_budget" in codes
-    program_diagnostics = [
-        d for d in diagnostics if d.code == "program_min_share_above_capacity"
-    ]
+    program_diagnostics = [d for d in diagnostics if d.code == "program_min_share_above_capacity"]
     assert {d.program_id for d in program_diagnostics} == {"big-a", "big-b"}
     for diagnostic in program_diagnostics:
         # Each program needs 0.60 but only 1.0 - 0.60 = 0.40 remains for it.

@@ -55,13 +55,13 @@ def required_region_fractions(
     binding one wins. Regions appear only when they have a floor or at least
     one program.
     """
-    regions = sorted({program.region for program in programs} | {floor.region for floor in region_floors})
+    regions = sorted(
+        {program.region for program in programs} | {floor.region for floor in region_floors}
+    )
     floor_by_region = {floor.region: floor.floor for floor in region_floors}
     required: dict[str, float] = {}
     for region in regions:
-        program_minimum = sum(
-            program.min_share for program in programs if program.region == region
-        )
+        program_minimum = sum(program.min_share for program in programs if program.region == region)
         required[region] = max(floor_by_region.get(region, 0.0), program_minimum)
     return required
 
@@ -101,8 +101,7 @@ def diagnose_infeasibility(
                 InfeasibilityDiagnostic(
                     code="invalid_program_min_share",
                     message=(
-                        f"Program {program.id!r} min_share {program.min_share} "
-                        "is not in [0, 1]."
+                        f"Program {program.id!r} min_share {program.min_share} " "is not in [0, 1]."
                     ),
                     suggestion=(
                         f"Set program {program.id!r} min_share to a fraction between 0 and 1."
@@ -115,9 +114,7 @@ def diagnose_infeasibility(
             return [
                 InfeasibilityDiagnostic(
                     code="invalid_region_floor",
-                    message=(
-                        f"Region {floor.region!r} floor {floor.floor} is not in [0, 1]."
-                    ),
+                    message=(f"Region {floor.region!r} floor {floor.floor} is not in [0, 1]."),
                     suggestion=(
                         f"Set region {floor.region!r}'s floor to a fraction between 0 and 1."
                     ),
@@ -137,9 +134,7 @@ def diagnose_infeasibility(
                         f"Region {floor.region!r} has a floor of {floor.floor:.4g} "
                         "but no programs to allocate to."
                     ),
-                    suggestion=(
-                        f"Add a program in region {floor.region!r} or drop its floor."
-                    ),
+                    suggestion=(f"Add a program in region {floor.region!r} or drop its floor."),
                     region=floor.region,
                 )
             )
@@ -195,9 +190,7 @@ def diagnose_infeasibility(
         )
         own_region_without = max(floor_by_region.get(own_region, 0.0), others_in_region)
         other_regions = sum(
-            requirement
-            for region, requirement in required.items()
-            if region != own_region
+            requirement for region, requirement in required.items() if region != own_region
         )
         max_allowed = 1.0 - own_region_without - other_regions
         if program.min_share > max_allowed + _TOLERANCE:
