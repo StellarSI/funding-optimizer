@@ -45,14 +45,18 @@ The optimizer **recommends**. It never moves funds on its own. Payouts remain un
 
 ## Allocation optimizer
 
-The optimizer ships two deterministic, testable building blocks under
+The optimizer ships three deterministic, testable building blocks under
 ``funding_optimizer/optimizer``:
 
 * ``solver.py`` — a deterministic linear-programming adapter (issue #14) that
   wraps SciPy/HiGHS behind a narrow interface. Solver options are pinned so
-  repeated runs with identical inputs produce identical allocations.
+  repeated runs with identical inputs produce identical allocations, and
+  `solve_with_lexicographic_tie_break` canonicalizes equal-value optima
+  (issue #16).
 * ``constraints.py`` — regional-floor fairness constraints (issue #13) plus a
   reach-maximizing objective, expressed as separate linear pieces.
+* ``diagnostics.py`` — actionable infeasibility diagnostics (issue #15) that
+  explain why a constraint set admits no allocation and what to change.
 
 Both are verified by tests under ``tests/`` and the project lints, type-checks
 and tests cleanly with ``make check``.
@@ -76,6 +80,48 @@ result = solve_allocation(programs, budget=250_000, region_floors=[
 print(result.allocation)   # deterministic allocation vector
 print(result.objective_value)
 ```
+
+### Deterministic tie-breaking
+
+A linear program can admit many allocations with the same objective value,
+and the solver may return any of them. Pass `tie_break=True` to canonicalize
+tied optima: earlier-listed programs are funded first, so repeated runs
+return identical allocations even when the LP has ties.
+
+```python
+result = solve_allocation(programs, budget=250_000, region_floors=[
+    RegionFloor(region="Africa", floor=0.50),
+], tie_break=True)
+assert result.tie_break_applied
+```
+
+For raw linear programs, `solve_with_lexicographic_tie_break` offers the same
+refinement directly on the solver adapter.
+
+### Infeasibility diagnostics
+
+When the constraint set admits no allocation, the optimizer explains why and
+what to change instead of returning a bare failure:
+
+```python
+from funding_optimizer.optimizer import diagnose_infeasibility, explain_result
+
+result = solve_allocation(programs, budget=250_000, region_floors=[
+    RegionFloor(region="Africa", floor=0.60),
+    RegionFloor(region="Asia", floor=0.70),
+])
+if not result.success:
+    for diagnostic in explain_result(result, programs, 250_000, [
+        RegionFloor(region="Africa", floor=0.60),
+        RegionFloor(region="Asia", floor=0.70),
+    ]):
+        print(diagnostic.code)        # e.g. "floors_exceed_budget"
+        print(diagnostic.message)     # names the conflicting requirement
+        print(diagnostic.suggestion)  # the relaxation that restores feasibility
+```
+
+`diagnose_infeasibility` runs the same structural analysis on a constraint
+set without solving it first.
 
 ## Getting started
 
@@ -106,10 +152,6 @@ programs = [
     Program(id="education-ke", min_share=0.10, expected_reach=4_500),
     Program(id="health-gh", min_share=0.15, expected_reach=7_800),
 ]
-
-plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(budget, programs)
-print(plan.summary())
-```
 
 plan = Optimizer(objective="maximize_reach", fairness="regional_floor").solve(budget, programs)
 print(plan.summary())
