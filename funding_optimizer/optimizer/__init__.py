@@ -11,7 +11,7 @@ from .constraints import (
     regional_floor_constraints,
     solve_allocation,
 )
-from .solver import HiGHSolver, Solver, SolverResult
+from .solver import HiGHSolver, Solver, SolverResult, solve_with_lexicographic_tie_break
 
 __all__ = [
     "HiGHSolver",
@@ -23,4 +23,5 @@ __all__ = [
     "maximize_reach_objective",
     "regional_floor_constraints",
     "solve_allocation",
+    "solve_with_lexicographic_tie_break",
 ]

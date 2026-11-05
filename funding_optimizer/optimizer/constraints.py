@@ -15,7 +15,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from .solver import HiGHSolver, Solver, SolverResult
+from .solver import HiGHSolver, Solver, SolverResult, solve_with_lexicographic_tie_break
 
 
 @dataclass(frozen=True)
@@ -150,15 +150,31 @@ def solve_allocation(
     region_floors: list[RegionFloor],
     *,
     solver: Solver | None = None,
+    tie_break: bool = False,
 ) -> SolverResult:
     """Build and solve the regional-floor allocation problem.
 
     Uses the deterministic HiGHS solver adapter unless a different solver is
     supplied, demonstrating the P14 adapter consumed by the P13 constraints.
+
+    With ``tie_break=True``, allocations that tie on objective value are
+    canonicalized lexicographically (earlier-listed programs are funded
+    first), so repeated runs return identical allocations even when the LP
+    has multiple optima.
     """
     if solver is None:
         solver = HiGHSolver()
     problem = build_allocation_problem(programs, budget, region_floors)
+    if tie_break:
+        return solve_with_lexicographic_tie_break(
+            solver,
+            problem["c"],  # type: ignore[arg-type]
+            A_ub=problem["A_ub"],  # type: ignore[arg-type]
+            b_ub=problem["b_ub"],  # type: ignore[arg-type]
+            A_eq=problem["A_eq"],  # type: ignore[arg-type]
+            b_eq=problem["b_eq"],  # type: ignore[arg-type]
+            bounds=problem["bounds"],  # type: ignore[arg-type]
+        )
     return solver.solve(
         problem["c"],  # type: ignore[arg-type]
         A_ub=problem["A_ub"],  # type: ignore[arg-type]
