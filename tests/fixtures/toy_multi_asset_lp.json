@@ -1,0 +1,23 @@
+{
+  "description": "Two-asset toy linear program with a known optimum (issue #17).",
+  "programs": [
+    { "id": "edu", "region": "Africa", "expected_reach": 10.0, "min_share": 0.1 },
+    { "id": "health", "region": "Africa", "expected_reach": 6.0, "min_share": 0.0 },
+    { "id": "cash", "region": "Asia", "expected_reach": 8.0, "min_share": 0.0 }
+  ],
+  "budget": { "USDC": 100.0, "XLM": 50.0 },
+  "region_floors": [
+    { "region": "Africa", "floor": 0.3 },
+    { "region": "Asia", "floor": 0.2 }
+  ],
+  "asset_constraints": [
+    { "asset": "XLM", "program_id": "edu", "max_share": 0.5 }
+  ],
+  "expected": {
+    "allocation": {
+      "USDC": { "edu": 80.0, "health": 0.0, "cash": 20.0 },
+      "XLM": { "edu": 25.0, "health": 0.0, "cash": 25.0 }
+    },
+    "objective_value": -1410.0
+  }
+}
