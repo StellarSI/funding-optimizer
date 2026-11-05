@@ -82,6 +82,29 @@ def test_no_region_floors_still_allocates_full_budget() -> None:
     assert np.isclose(result.allocation[0], 100.0, atol=1e-6)
 
 
+def test_solve_allocation_tie_break_is_opt_in_and_deterministic() -> None:
+    """Two identical programs make the optimum a tie; the flag canonicalizes it.
+
+    The default run leaves the solver's choice untouched; with ``tie_break``
+    the earlier-listed program is funded first, on every run.
+    """
+    programs = [
+        Program(id="first", region="Africa", expected_reach=5.0),
+        Program(id="second", region="Africa", expected_reach=5.0),
+    ]
+
+    plain = solve_allocation(programs, 100.0, [])
+    broken = solve_allocation(programs, 100.0, [], tie_break=True)
+
+    assert plain.success is True
+    assert plain.tie_break_applied is False
+    assert broken.success is True
+    assert broken.tie_break_applied is True
+    assert broken.allocation is not None
+    assert np.isclose(broken.allocation[0], 100.0, atol=1e-6)
+    assert np.isclose(broken.allocation[1], 0.0, atol=1e-6)
+
+
 def test_regional_floors_exceeding_budget_raise() -> None:
     programs = _programs()
     bad_floors = [
