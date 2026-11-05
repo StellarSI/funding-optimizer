@@ -95,9 +95,10 @@ def diagnose_infeasibility(
             )
         ]
 
+    invalid: list[InfeasibilityDiagnostic] = []
     for program in programs:
         if not isfinite(program.min_share) or not 0.0 <= program.min_share <= 1.0:
-            return [
+            invalid.append(
                 InfeasibilityDiagnostic(
                     code="invalid_program_min_share",
                     message=(
@@ -108,10 +109,10 @@ def diagnose_infeasibility(
                     ),
                     program_id=program.id,
                 )
-            ]
+            )
     for floor in region_floors:
         if not isfinite(floor.floor) or not 0.0 <= floor.floor <= 1.0:
-            return [
+            invalid.append(
                 InfeasibilityDiagnostic(
                     code="invalid_region_floor",
                     message=(f"Region {floor.region!r} floor {floor.floor} is not in [0, 1]."),
@@ -120,7 +121,9 @@ def diagnose_infeasibility(
                     ),
                     region=floor.region,
                 )
-            ]
+            )
+    if invalid:
+        return invalid
 
     diagnostics: list[InfeasibilityDiagnostic] = []
 
