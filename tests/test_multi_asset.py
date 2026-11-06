@@ -21,9 +21,9 @@ from funding_optimizer.optimizer.constraints import (
     Program,
     RegionFloor,
     build_multi_asset_allocation_problem,
+    multi_asset_bounds,
     multi_asset_budget_constraints,
     multi_asset_constraints,
-    multi_asset_bounds,
     multi_asset_objective,
     solve_multi_asset_allocation,
 )
@@ -110,9 +110,7 @@ def test_toy_fixture_known_optimum() -> None:
     floors = [RegionFloor(**floor) for floor in fixture["region_floors"]]
     constraints = [AssetConstraint(**constraint) for constraint in fixture["asset_constraints"]]
 
-    result = solve_multi_asset_allocation(
-        programs, budget, floors, asset_constraints=constraints
-    )
+    result = solve_multi_asset_allocation(programs, budget, floors, asset_constraints=constraints)
 
     assert result.success is True
     assert result.allocation is not None
@@ -129,9 +127,7 @@ def test_toy_fixture_known_optimum() -> None:
 
 def test_per_asset_constraints_apply_within_each_tranche_independently() -> None:
     constraints = [AssetConstraint(asset="USDC", program_id="cash", max_share=0.0)]
-    result = solve_multi_asset_allocation(
-        _programs(), _budget(), [], asset_constraints=constraints
-    )
+    result = solve_multi_asset_allocation(_programs(), _budget(), [], asset_constraints=constraints)
     assert result.success is True
     assert result.allocation is not None
     # USDC tranche: cash capped at zero, so it cannot receive USDC.
@@ -145,9 +141,7 @@ def test_infeasible_when_tranche_minimums_exceed_100_percent() -> None:
         AssetConstraint(asset="XLM", program_id="edu", min_share=0.6),
         AssetConstraint(asset="XLM", program_id="health", min_share=0.6),
     ]
-    result = solve_multi_asset_allocation(
-        _programs(), _budget(), [], asset_constraints=constraints
-    )
+    result = solve_multi_asset_allocation(_programs(), _budget(), [], asset_constraints=constraints)
     assert result.success is False
     assert result.allocation is None
 
@@ -167,7 +161,7 @@ def test_empty_programs_raise() -> None:
 
 
 def test_non_budget_raises() -> None:
-    with pytest.raises(ValueError, match="must be a Budget"):
+    with pytest.raises(TypeError, match="must be a Budget"):
         build_multi_asset_allocation_problem(_programs(), 100.0)  # type: ignore[arg-type]
 
 

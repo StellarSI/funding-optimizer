@@ -8,9 +8,9 @@ or submits payouts.
 from __future__ import annotations
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass
 from math import isfinite
-from typing import Mapping
 
 _ASSET_CODE = re.compile(r"^[A-Za-z0-9]{1,12}(:[A-Za-z0-9]{1,56})?$")
 
@@ -23,7 +23,7 @@ def validate_asset_code(asset: str) -> str:
     1-56 alphanumeric characters.
     """
     if not isinstance(asset, str):
-        raise ValueError(f"Asset code must be a string, got {type(asset).__name__}")
+        raise TypeError(f"Asset code must be a string, got {type(asset).__name__}")
     code = asset.strip().upper()
     if not _ASSET_CODE.match(code):
         raise ValueError(
@@ -68,15 +68,13 @@ class Budget:
         elif total is not None and asset is not None:
             raw = {asset: total}
         else:
-            raise ValueError(
-                "Budget requires either amounts=... or both total=... and asset=..."
-            )
+            raise ValueError("Budget requires either amounts=... or both total=... and asset=...")
 
         parsed: dict[str, float] = {}
         for code, amount in raw.items():
             asset_code = validate_asset_code(code)
             if isinstance(amount, bool) or not isinstance(amount, (int, float)):
-                raise ValueError(
+                raise TypeError(
                     f"Budget amount for asset {asset_code!r} must be a real number, "
                     f"got {amount!r}"
                 )

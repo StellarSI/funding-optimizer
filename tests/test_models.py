@@ -58,9 +58,9 @@ class TestConstruction:
                 Budget(amounts={"USDC": bad})
 
     def test_non_numeric_amounts_raise(self) -> None:
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             Budget(amounts={"USDC": "100"})  # type: ignore[dict-item]
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             Budget(amounts={"USDC": True})
 
     def test_total_and_asset_are_ambiguous_for_multi_asset(self) -> None:
@@ -81,5 +81,5 @@ class TestValidateAssetCode:
         assert validate_asset_code(" xlm ") == "XLM"
 
     def test_rejects_non_string(self) -> None:
-        with pytest.raises(ValueError, match="must be a string"):
+        with pytest.raises(TypeError, match="must be a string"):
             validate_asset_code(5)  # type: ignore[arg-type]

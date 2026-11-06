@@ -211,13 +211,15 @@ class AssetConstraint:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "asset", validate_asset_code(self.asset))
-        program_id = self.program_id.strip() if isinstance(self.program_id, str) else ""
+        if not isinstance(self.program_id, str):
+            raise TypeError(f"AssetConstraint program_id must be a string, got {self.program_id!r}")
+        program_id = self.program_id.strip()
         if not program_id:
             raise ValueError("AssetConstraint program_id must be a non-empty string")
         object.__setattr__(self, "program_id", program_id)
         for label, value in (("min_share", self.min_share), ("max_share", self.max_share)):
             if isinstance(value, bool) or not isinstance(value, (int, float)):
-                raise ValueError(f"AssetConstraint {label} must be a real number, got {value!r}")
+                raise TypeError(f"AssetConstraint {label} must be a real number, got {value!r}")
             fraction = float(value)
             if not isfinite(fraction) or not 0.0 <= fraction <= 1.0:
                 raise ValueError(f"AssetConstraint {label} {fraction} is not in [0, 1]")
@@ -258,7 +260,7 @@ def validate_multi_asset(
     """
     validate(programs, region_floors)
     if not isinstance(budget, Budget):
-        raise ValueError(f"budget must be a Budget instance, got {type(budget).__name__}")
+        raise TypeError(f"budget must be a Budget instance, got {type(budget).__name__}")
     if not programs:
         raise ValueError("at least one program is required")
 
@@ -288,7 +290,7 @@ def multi_asset_objective(programs: list[Program], budget: Budget) -> np.ndarray
     Variables are ordered asset-major (every program for the first asset,
     then every program for the second, ...); the negated per-unit reach is
     tiled once per asset. ``expected_reach`` is treated as per unit of any
-    asset — per-asset exchange rates are out of scope.
+    asset - per-asset exchange rates are out of scope.
     """
     base = maximize_reach_objective(programs)
     return np.tile(base, len(budget.assets))
