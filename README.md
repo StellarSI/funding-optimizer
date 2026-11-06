@@ -54,7 +54,10 @@ The optimizer ships three deterministic, testable building blocks under
   `solve_with_lexicographic_tie_break` canonicalizes equal-value optima
   (issue #16).
 * ``constraints.py`` — regional-floor fairness constraints (issue #13) plus a
-  reach-maximizing objective, expressed as separate linear pieces.
+  reach-maximizing objective, expressed as separate linear pieces; issue #17
+  extends it to multi-asset budgets and per-asset constraints.
+* ``models.py`` — the `Budget` value object (issue #17): single-asset or
+  multi-asset Stellar budgets with validated asset codes.
 * ``diagnostics.py`` — actionable infeasibility diagnostics (issue #15) that
   explain why a constraint set admits no allocation and what to change.
 
@@ -123,6 +126,53 @@ if not result.success:
 `diagnose_infeasibility` runs the same structural analysis on a constraint
 set without solving it first.
 
+### Multi-asset budgets
+
+Budgets can span more than one Stellar asset. Pass an `amounts` mapping to
+`Budget`; the optimizer allocates each tranche fully and applies regional
+floors, program `min_share` and per-asset constraints within every tranche:
+
+```python
+from funding_optimizer import Budget
+from funding_optimizer.optimizer.constraints import (
+    AssetConstraint,
+    Program,
+    RegionFloor,
+    solve_multi_asset_allocation,
+)
+
+budget = Budget(amounts={"USDC": 150_000, "XLM": 40_000_000})
+programs = [
+    Program(id="cash-transfers-ng", region="Africa", expected_reach=12_000, min_share=0.20),
+    Program(id="education-ke", region="Africa", expected_reach=4_500, min_share=0.10),
+]
+
+result = solve_multi_asset_allocation(
+    programs,
+    budget,
+    [RegionFloor(region="Africa", floor=0.50)],
+    asset_constraints=[
+        AssetConstraint(asset="XLM", program_id="education-ke", max_share=0.5),
+    ],
+)
+print(result.allocation)  # {"USDC": {...}, "XLM": {...}} — one entry per tranche
+```
+
+Single-asset budgets keep working unchanged:
+`Budget(total=250_000, asset="USDC")`.
+
+`AssetConstraint` bounds how much of one tranche a single program may or
+must receive, as a fraction of that tranche: `min_share=0.4` requires at
+least 40% of the asset to reach the program, `max_share=0.5` caps it at 50%.
+Asset codes are validated and normalized (1-12 alphanumerics, optional
+`:ISSUER` suffix) in `Budget` and in constraints, and duplicate constraints
+or unknown assets/programs raise `ValueError`.
+
+Note: allocations are balanced per tranche — the per-unit `expected_reach`
+is treated as equal across assets, and there is no cross-asset coupling yet
+(e.g. capping the total value held in one asset). Multi-asset runs return a
+`MultiAssetResult` whose `allocation` maps asset → program id → amount.
+
 ## Getting started
 
 ### Prerequisites
@@ -179,7 +229,9 @@ plan = solve_maximize_reach(
 ```
 
 Problems whose `min_share` values sum over 100% are infeasible; the solver
-fails with a diagnostic instead of returning a plan.</think><tool_call>edit<arg_key>newString</arg_key><arg_value>### maximize_reach solver
+fails with a diagnostic instead of returning a plan.
+
+### maximize_reach solver
 
 `solve_maximize_reach` binds every program's `min_share` floor and hands
 the remaining budget to the program with the largest `expected_reach`
