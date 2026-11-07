@@ -313,9 +313,11 @@ def sensitivity_analysis(
         for signed_delta in (-perturbation, perturbation):
             perturbed_value = min(1.0, max(0.0, base_value + signed_delta))
             perturbed_floors = [
-                RegionFloor(floor.region, perturbed_value)
-                if kind == _KIND_FLOOR and f"{_KIND_FLOOR}:{floor.region}" == parameter
-                else floor
+                (
+                    RegionFloor(floor.region, perturbed_value)
+                    if kind == _KIND_FLOOR and f"{_KIND_FLOOR}:{floor.region}" == parameter
+                    else floor
+                )
                 for floor in floors
             ]
             perturbed_programs = [

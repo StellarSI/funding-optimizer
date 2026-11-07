@@ -210,7 +210,5 @@ def test_tie_break_is_threaded_through() -> None:
 
     assert result.success is True
     assert result.tie_break_applied is True
-    allocations = [
-        phase.allocation for phase in result.phases if phase.allocation is not None
-    ]
+    allocations = [phase.allocation for phase in result.phases if phase.allocation is not None]
     assert np.isclose(sum(sum(a.values()) for a in allocations), result.total_allocated)

@@ -310,9 +310,7 @@ def solve_phased_allocation(
                 total_allocated=total_allocated,
                 unallocated=None,
                 objective_value=None,
-                message=(
-                    f"Phase {phase.id!r} is infeasible; later phases were not attempted."
-                ),
+                message=(f"Phase {phase.id!r} is infeasible; later phases were not attempted."),
                 tie_break_applied=tie_break_seen,
             )
 
