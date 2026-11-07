@@ -63,10 +63,7 @@ def _validate(
             raise ValueError(
                 f"Commitment references unknown program {commitment.program_id!r}"
             )
-        if (
-            not isfinite(commitment.amount)
-            or commitment.amount < 0.0
-        ):
+        if not isfinite(commitment.amount) or commitment.amount < 0.0:
             raise ValueError(
                 f"Commitment for {commitment.program_id!r} must be a "
                 f"non-negative, finite number, got {commitment.amount!r}"
