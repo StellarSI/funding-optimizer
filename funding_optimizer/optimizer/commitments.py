@@ -161,7 +161,9 @@ def solve_committed_allocation(
             bounds=bounds,
         )
     else:
-        solved = solver.solve(c, A_ub=a_ub, b_ub=b_ub, A_eq=a_eq, b_eq=b_eq, bounds=bounds)
+        solved = solver.solve(
+            c, A_ub=a_ub, b_ub=b_ub, A_eq=a_eq, b_eq=b_eq, bounds=bounds
+        )
 
     if not solved.success or solved.allocation is None:
         return CommitmentResult(
