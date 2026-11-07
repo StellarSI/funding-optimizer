@@ -46,13 +46,9 @@ class CohortResult:
     iterations: int | None = None
 
 
-def _validate(
-    programs: list[Program], cohorts: list[Cohort], budget: float
-) -> None:
+def _validate(programs: list[Program], cohorts: list[Cohort], budget: float) -> None:
     if not isfinite(budget) or budget <= 0.0:
-        raise ValueError(
-            f"Budget must be a positive, finite number, got {budget!r}"
-        )
+        raise ValueError(f"Budget must be a positive, finite number, got {budget!r}")
     if not programs:
         raise ValueError("at least one program is required")
     if not cohorts:
@@ -62,13 +58,9 @@ def _validate(
     total_min = 0.0
     for cohort in cohorts:
         if not 0.0 <= cohort.min_share <= 1.0:
-            raise ValueError(
-                f"Cohort {cohort.id!r} min_share {cohort.min_share} is not in [0, 1]"
-            )
+            raise ValueError(f"Cohort {cohort.id!r} min_share {cohort.min_share} is not in [0, 1]")
         if not 0.0 <= cohort.max_share <= 1.0:
-            raise ValueError(
-                f"Cohort {cohort.id!r} max_share {cohort.max_share} is not in [0, 1]"
-            )
+            raise ValueError(f"Cohort {cohort.id!r} max_share {cohort.max_share} is not in [0, 1]")
         if cohort.min_share > cohort.max_share:
             raise ValueError(
                 f"Cohort {cohort.id!r} min_share {cohort.min_share} exceeds "
@@ -78,39 +70,29 @@ def _validate(
         for program_id in cohort.program_ids:
             if program_id not in program_ids:
                 raise ValueError(
-                    f"Cohort {cohort.id!r} references unknown program "
-                    f"{program_id!r}"
+                    f"Cohort {cohort.id!r} references unknown program " f"{program_id!r}"
                 )
             if program_id in assigned:
-                raise ValueError(
-                    f"Program {program_id!r} is assigned to multiple cohorts"
-                )
+                raise ValueError(f"Program {program_id!r} is assigned to multiple cohorts")
             assigned.add(program_id)
     if total_min > 1.0:
         raise ValueError(
-            f"Cohort min_shares sum to {total_min}, which exceeds the whole "
-            "budget (1.0)"
+            f"Cohort min_shares sum to {total_min}, which exceeds the whole " "budget (1.0)"
         )
 
 
-def _cohort_effective_reach(
-    cohort: Cohort, reach_by_id: dict[str, float]
-) -> float:
+def _cohort_effective_reach(cohort: Cohort, reach_by_id: dict[str, float]) -> float:
     return max(reach_by_id[program_id] for program_id in cohort.program_ids)
 
 
-def _cohort_objective(
-    cohorts: list[Cohort], reach_by_id: dict[str, float]
-) -> np.ndarray:
+def _cohort_objective(cohorts: list[Cohort], reach_by_id: dict[str, float]) -> np.ndarray:
     return np.array(
         [-_cohort_effective_reach(cohort, reach_by_id) for cohort in cohorts],
         dtype=float,
     )
 
 
-def _cohort_constraints(
-    cohorts: list[Cohort], budget: float
-) -> tuple[
+def _cohort_constraints(cohorts: list[Cohort], budget: float) -> tuple[
     np.ndarray,
     np.ndarray,
     np.ndarray,
@@ -174,9 +156,7 @@ def solve_cohort_allocation(
             bounds=bounds,
         )
     else:
-        solved = solver.solve(
-            c, A_ub=a_ub, b_ub=b_ub, A_eq=a_eq, b_eq=b_eq, bounds=bounds
-        )
+        solved = solver.solve(c, A_ub=a_ub, b_ub=b_ub, A_eq=a_eq, b_eq=b_eq, bounds=bounds)
     if not solved.success or solved.allocation is None:
         return CohortResult(
             success=False,
@@ -188,12 +168,9 @@ def solve_cohort_allocation(
             iterations=solved.iterations,
         )
     cohort_allocation = {
-        cohort.id: float(solved.allocation[position])
-        for position, cohort in enumerate(cohorts)
+        cohort.id: float(solved.allocation[position]) for position, cohort in enumerate(cohorts)
     }
-    program_allocation: dict[str, float] = {
-        program.id: 0.0 for program in programs
-    }
+    program_allocation: dict[str, float] = {program.id: 0.0 for program in programs}
     for position, cohort in enumerate(cohorts):
         amount = float(solved.allocation[position])
         members = [programs_by_id[program_id] for program_id in cohort.program_ids]

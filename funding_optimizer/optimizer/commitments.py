@@ -45,9 +45,7 @@ def _validate(
     region_floors: list[RegionFloor],
 ) -> None:
     if not isfinite(budget) or budget <= 0.0:
-        raise ValueError(
-            f"Budget must be a positive, finite number, got {budget!r}"
-        )
+        raise ValueError(f"Budget must be a positive, finite number, got {budget!r}")
     if not programs:
         raise ValueError("at least one program is required")
     for region_floor in region_floors:
@@ -60,24 +58,18 @@ def _validate(
     total_committed = 0.0
     for commitment in commitments:
         if commitment.program_id not in program_ids:
-            raise ValueError(
-                f"Commitment references unknown program {commitment.program_id!r}"
-            )
+            raise ValueError(f"Commitment references unknown program {commitment.program_id!r}")
         if not isfinite(commitment.amount) or commitment.amount < 0.0:
             raise ValueError(
                 f"Commitment for {commitment.program_id!r} must be a "
                 f"non-negative, finite number, got {commitment.amount!r}"
             )
         if commitment.program_id in committed:
-            raise ValueError(
-                f"Duplicate commitment for program {commitment.program_id!r}"
-            )
+            raise ValueError(f"Duplicate commitment for program {commitment.program_id!r}")
         committed[commitment.program_id] = float(commitment.amount)
         total_committed += float(commitment.amount)
     if total_committed > float(budget):
-        raise ValueError(
-            f"Commitments sum to {total_committed}, which exceeds the budget {budget}"
-        )
+        raise ValueError(f"Commitments sum to {total_committed}, which exceeds the budget {budget}")
 
 
 def solve_committed_allocation(
@@ -161,9 +153,7 @@ def solve_committed_allocation(
             bounds=bounds,
         )
     else:
-        solved = solver.solve(
-            c, A_ub=a_ub, b_ub=b_ub, A_eq=a_eq, b_eq=b_eq, bounds=bounds
-        )
+        solved = solver.solve(c, A_ub=a_ub, b_ub=b_ub, A_eq=a_eq, b_eq=b_eq, bounds=bounds)
 
     if not solved.success or solved.allocation is None:
         return CommitmentResult(
@@ -175,8 +165,7 @@ def solve_committed_allocation(
             iterations=solved.iterations,
         )
     program_allocation = {
-        program.id: float(solved.allocation[index_by_id[program.id]])
-        for program in programs
+        program.id: float(solved.allocation[index_by_id[program.id]]) for program in programs
     }
     return CommitmentResult(
         success=True,
