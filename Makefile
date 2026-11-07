@@ -1,14 +1,31 @@
-.PHONY: check lint test
+.PHONY: help install check lint format format-check typecheck test
 
-# Run the full verification pipeline: linting, formatting check, type-checking,
-# and the test suite. Equivalent to the Ruff, Black, mypy and pytest commands
-# referenced by the optimizer issues until a formal `make check` is defined.
-check: lint test
+help:
+	@echo "Available targets:"
+	@echo "  make install      - Install package and development dependencies"
+	@echo "  make check        - Run full quality suite (lint, format-check, typecheck, test)"
+	@echo "  make lint         - Run ruff linter"
+	@echo "  make format       - Run black code formatter"
+	@echo "  make format-check - Check formatting without modifying files"
+	@echo "  make typecheck    - Run mypy static type checker"
+	@echo "  make test         - Run pytest test suite"
+
+install:
+	python -m pip install -e ".[dev]"
+
+check: lint format-check typecheck test
 
 lint:
 	ruff check funding_optimizer tests
+
+format:
+	black funding_optimizer tests
+
+format-check:
 	black --check funding_optimizer tests
-	mypy funding_optimizer
+
+typecheck:
+	mypy funding_optimizer tests
 
 test:
-	pytest -q
+	pytest
