@@ -135,3 +135,47 @@ def test_monte_carlo_validation_boundaries(base_programs: list[Program]) -> None
 
     with pytest.raises(ValueError, match="Budget must be positive and finite"):
         run_monte_carlo_simulation(base_programs, -500.0, [], cfg)
+
+
+def test_monte_carlo_handles_intermittent_solver_failures(
+    base_programs: list[Program],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Verifies Monte Carlo accurately aggregates only successful trials when failures occur."""
+    import numpy as np
+
+    import funding_optimizer.scenarios.engine as engine_mod
+    from funding_optimizer.optimizer import SolverResult
+
+    call_count = 0
+
+    def mock_solve(*args: object, **kwargs: object) -> SolverResult:
+        nonlocal call_count
+        call_count += 1
+        # Alternate: Trial 1 succeeds, Trial 2 fails, Trial 3 succeeds
+        if call_count % 2 == 1:
+            return SolverResult(
+                success=True,
+                status=0,
+                message="Optimal",
+                objective_value=100.0,
+                allocation=np.array([400.0, 350.0, 250.0]),
+            )
+        return SolverResult(
+            success=False,
+            status=1,
+            message="Infeasible",
+            objective_value=None,
+            allocation=None,
+        )
+
+    monkeypatch.setattr(engine_mod, "solve_allocation", mock_solve)
+
+    cfg = MonteCarloConfig(num_trials=4, seed=42, reach_volatility=0.1)
+    summary = run_monte_carlo_simulation(base_programs, 1000.0, [], cfg)
+
+    assert summary.num_trials == 4
+    assert summary.success_rate == 0.5
+    assert summary.per_program_mean_allocation["p-edu"] == 400.0
+    assert summary.per_program_mean_allocation["p-health"] == 350.0
+    assert summary.per_program_mean_allocation["p-solar"] == 250.0

@@ -149,10 +149,10 @@ def run_monte_carlo_simulation(
     num_programs = len(programs)
 
     objectives: list[float] = []
-    allocations_matrix = np.zeros((config.num_trials, num_programs))
+    successful_allocations: list[list[float]] = []
     successes = 0
 
-    for i in range(config.num_trials):
+    for _ in range(config.num_trials):
         # Deterministic log-normal / Gaussian relative shock to expected reach
         shocks = rng.normal(1.0, config.reach_volatility, size=num_programs)
         # Prevent non-positive reach
@@ -173,16 +173,15 @@ def run_monte_carlo_simulation(
             successes += 1
             obj = float(result.objective_value) if result.objective_value is not None else 0.0
             objectives.append(obj)
-            allocations_matrix[i, :] = result.allocation
+            successful_allocations.append([float(x) for x in result.allocation])
 
     success_rate = successes / config.num_trials
     obj_array = np.array(objectives) if objectives else np.array([0.0])
 
-    mean_allocs = (
-        np.mean(allocations_matrix[:successes, :], axis=0)
-        if successes > 0
-        else np.zeros(num_programs)
-    )
+    if successful_allocations:
+        mean_allocs = np.mean(np.array(successful_allocations), axis=0)
+    else:
+        mean_allocs = np.zeros(num_programs)
     per_program_map = {programs[j].id: float(mean_allocs[j]) for j in range(num_programs)}
 
     return MonteCarloSummary(
