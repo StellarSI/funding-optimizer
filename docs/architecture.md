@@ -1,104 +1,106 @@
-# Architecture: feature pipeline and data contracts
+# Architecture & Data Pipeline Contracts
 
-This document describes the `funding-optimizer` feature pipeline and the
-data contracts that flow through it. It expands on
-[README §How it works](README.md#how-it-works).
+This document formalizes the feature ingestion pipeline, model interfaces, and export data contracts for `funding-optimizer`, fulfilling **Issue #99** as specified under `README -> How it works`.
 
-`funding-optimizer` recommends allocations and never signs or submits
-payouts.
+---
 
-## Feature pipeline
+## 1. High-Level System Architecture
 
 ```text
-Program data (CSV / API)          On-chain data
-budgets, cohorts, constraints     (Horizon / transaction-analytics-api)
-              │                              │
-              └──────────────┬───────────────┘
-                             ▼
-                      Feature pipeline
-                             ▼
-             Forecast models + allocation optimizer
-                             ▼
-        Allocation plan  ·  Scenarios  ·  Impact reports
-                             │
-                             ▼
-      Optional payload for SDP / custom payout (you sign and submit)
+  Donor & Protocol Data                 On-Chain Verification
+(budgets, cohorts, constraints)   (transaction-analytics-api / Horizon)
+             │                                     │
+             └──────────────────┬──────────────────┘
+                                ▼
+                         Feature Pipeline
+                                ▼
+                    Forecast Models + Optimizer
+                                ▼
+                 Allocation Plan · Scenarios · Reports
+                                │
+                                ▼
+             Optional: Payload for SDP / Custom Payout
 ```
 
-The pipeline has three stages:
+### Core Invariant
+**The optimizer is an advisory recommendation engine only.** It strictly produces allocation plans and SDP export payloads; it **never signs or submits on-chain transactions** and never manages private keys.
 
-1. **Ingestion** — program budgets, cohorts, expected reach, region floors,
-   and constraints are read from CSV, JSON, or the analytics API.
-2. **Optimization** — the deterministic allocator distributes each budget
-   tranche across programs subject to regional floors, program minimum and
-   maximum shares, and per-asset constraints.
-3. **Reporting** — allocation plans are serialized to a stable JSON contract
-   and can be compared across scenarios or linked to on-chain transaction
-   hashes.
+---
 
-## Data contracts
+## 2. Ingestion Pipeline & Schemas
 
-### Budget
+### 2.1 Program Candidate Model
+Candidate recipient programs ingested from grant rounds or NGO proposals adhere to the following schema:
 
-A budget is one or more Stellar asset amounts:
+```python
+class Program:
+    id: str               # Unique program slug / grant identifier
+    region: str           # Target geographic region (e.g. 'Africa', 'Asia')
+    expected_reach: float # Projected human beneficiaries reached per unit funding
+    min_share: float      # Minimum allocation floor as a percentage of total budget [0.0, 1.0]
+```
 
-- Single asset: `Budget(total=250_000, asset="USDC")`
-- Multi-asset: `Budget(amounts={"USDC": 150_000, "XLM": 40_000_000})`
+### 2.2 Regional Fairness Floor Contract
+Ensures geographic diversity and equitable capital allocation:
 
-Asset codes are trimmed, uppercased, and validated as Stellar asset codes
-(1–12 alphanumeric characters, optional `:ISSUER` suffix). Amounts must be
-finite, strictly positive real numbers. Duplicate assets after normalization
-raise `ValueError`.
+```python
+class RegionFloor:
+    region: str   # Regional identifier matching program cohorts
+    floor: float  # Minimum percentage of total budget allocated to the region [0.0, 1.0]
+```
 
-### Program
+---
 
-A program receiving an allocation:
+## 3. Optimization Engine Architecture
 
-- `id` — non-empty, trimmed program identifier.
-- `region` — optional non-empty region name used for regional floors.
-- `expected_reach` — non-negative integer (people reached per unit funded).
-- `min_share` — finite fraction in `[0, 1]`; share of the tranche reserved
-  for the program.
+### 3.1 Linear Program Formulation
+The core optimizer formulates a bounded linear program solved deterministically via SciPy/HiGHS:
 
-### RegionFloor
+$$\max \quad \sum_{i} \text{expected\_reach}_i \cdot x_i \iff \min \quad -c^T x$$
 
-A regional fairness constraint:
+Subject to:
+1. **Total Budget Conservation:**  
+   $$\sum_{i=1}^n x_i = \text{Budget}$$
+2. **Program Minimum Allocation Caps:**  
+   $$x_i \ge \text{min\_share}_i \cdot \text{Budget} \quad \forall i$$
+3. **Regional Floor Constraints:**  
+   $$\sum_{i \in \text{Region}_r} x_i \ge \text{floor}_r \cdot \text{Budget} \quad \forall r$$
+4. **Non-Negativity:**  
+   $$x_i \ge 0 \quad \forall i$$
 
-- `region` — region name.
-- `floor` — finite fraction in `[0, 1]`; minimum share of the tranche the
-  region must receive.
+---
 
-### AssetConstraint
+## 4. SDP (Stellar Disbursement Platform) Export Contract
 
-A per-asset bound on how much of one tranche a single program may receive:
+When handing off recommended allocations to SDP for bulk payout execution, payloads adhere to the canonical schema defined in `funding_optimizer.sdp`:
 
-- `asset` — validated Stellar asset code.
-- `program_id` — program the constraint applies to.
-- `min_share` / `max_share` — optional fractions in `[0, 1]`.
+```json
+{
+  "batch_id": "cohort-2026-q4",
+  "created_at": "2026-11-05T10:00:00Z",
+  "idempotency_key": "sdp:alloc:8f4b1192837bc210...",
+  "item_count": 3,
+  "total_amount": "500000.0000000",
+  "disbursements": [
+    {
+      "amount": "200000.0000000",
+      "asset_code": "USDC",
+      "asset_issuer": "GDQERFIB4LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLM7",
+      "recipient_id": "prog-edu-01",
+      "stellar_address": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5"
+    }
+  ]
+}
+```
 
-Duplicate constraints or constraints on unknown assets/programs raise
-`ValueError`.
+### 4.1 Cryptographic Idempotency Key
+- Generated via SHA-256 over canonical, address-sorted recipient dictionaries.
+- Guarantees order-independent hashing (`sdp:alloc:<hash>`) to prevent duplicate double-spend disbursements across network retries.
 
-### AllocationPlan
+---
 
-The result of an optimization run serializes to a stable JSON contract
-(`funding_optimizer/schemas/plan.schema.json`). A plan includes, per asset
-tranche, the program → amount mapping, the objective value, and whether the
-run succeeded. Plans round-trip through `to_dict()` / `to_json()` /
-`from_dict()` / `from_json()` and are validated against the schema on read,
-so malformed plans fail loudly at the boundary.
+## 5. Security & Responsible Use Boundary
 
-## Validation boundaries
-
-- `Budget` and `Program` raise `ValidationError` (a `ValueError`) on invalid
-  input: non-positive totals, invalid asset codes, out-of-range shares,
-  negative reach, empty program ids.
-- Infeasible constraint sets (e.g. regional floors or `min_share` values
-  exceeding the budget) produce an infeasibility diagnostic instead of a
-  plan, naming the conflicting requirement and a suggested relaxation.
-
-## On-chain boundary
-
-Delivery-time forecasting, cash-out prediction, and SDP-compatible export
-are on the roadmap, not implemented in this release. Where the optimizer
-touches on-chain data it reads only; it never signs or submits payouts.
+1. **Least Privilege:** Connection credentials (`DATABASE_URL`, API keys) are redacted in representations (`safe_dict()`) and excluded from runtime logs.
+2. **Data Minimization:** Models store and export public Stellar addresses (`G...`) rather than personal identity data (PII).
+3. **Fail-Closed Principle:** Any infeasible constraint configuration (e.g. regional floors summing to $> 1.0$) raises an immediate validation error without producing corrupt export files.
