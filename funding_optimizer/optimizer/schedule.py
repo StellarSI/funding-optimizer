@@ -63,7 +63,7 @@ class BudgetPhase:
         amount = float(self.amount)
         if not isfinite(amount) or amount <= 0.0:
             msg = f"BudgetPhase amount must be a positive, finite number, got {amount!r}"
-        raise ValueError(msg)
+            raise ValueError(msg)
         object.__setattr__(self, "amount", amount)
 
 
