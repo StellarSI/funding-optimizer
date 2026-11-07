@@ -31,7 +31,12 @@ The pipeline has three stages:
    and constraints are read from CSV, JSON, or the analytics API.
 2. **Optimization** — the deterministic allocator distributes each budget
    tranche across programs subject to regional floors, program minimum and
-   maximum shares, and per-asset constraints.
+   maximum shares, and per-asset constraints. Budgets disbursed over time
+   are allocated phase by phase (`BudgetSchedule` /
+   `solve_phased_allocation`), with budget carried forward when programs
+   cannot absorb their full tranche. `sensitivity_analysis` re-solves the
+   problem at `base ± δ` per cap, minimum and fairness floor to show which
+   constraint is binding and what loosening or tightening it would do.
 3. **Reporting** — allocation plans are serialized to a stable JSON contract
    and can be compared across scenarios or linked to on-chain transaction
    hashes.
@@ -78,6 +83,24 @@ A per-asset bound on how much of one tranche a single program may receive:
 
 Duplicate constraints or constraints on unknown assets/programs raise
 `ValueError`.
+
+### BudgetSchedule and sensitivity reports
+
+A `BudgetSchedule` is an ordered, validated sequence of `BudgetPhase`
+values (an id and a positive finite amount per phase). Allocating a
+schedule solves one linear program per phase in order; a phase's available
+budget is its scheduled amount plus whatever earlier phases carried forward
+(phase caps below the tranche force under-allocation, and the remainder
+rolls forward). Each phase reports its allocation, carry-in/carry-out and
+diagnostics; the run stops at the first infeasible phase.
+
+A sensitivity report (`SensitivityReport`) sweeps every swept parameter —
+regional floors, program `min_share` minimums and optional per-program
+budget caps — at `base ± perturbation`, clamped to `[0, 1]`. Each entry
+records the perturbed value, the objective change (negated reach), whether
+the perturbed solve succeeded, and whether the constraint is binding at the
+base optimum. Perturbations that become infeasible are reported with
+`success=False` and a diagnostic, not raised.
 
 ### AllocationPlan
 
