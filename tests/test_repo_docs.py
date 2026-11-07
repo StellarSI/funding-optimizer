@@ -16,3 +16,8 @@ ROOT = Path(__file__).resolve().parent.parent
 def test_security_md_exists() -> None:
     """SECURITY.md (issue #98) is present at the repository root."""
     assert (ROOT / "SECURITY.md").is_file()
+
+
+def test_architecture_doc_exists() -> None:
+    """docs/architecture.md (issue #99) is present at the documented path."""
+    assert (ROOT / "docs" / "architecture.md").is_file()
