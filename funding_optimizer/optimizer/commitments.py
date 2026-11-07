@@ -105,7 +105,7 @@ def solve_committed_allocation(
     c = np.array([-reach_by_id[program.id] for program in programs], dtype=float)
 
     # Bounds: committed programs are locked to their commitment amount.
-    bounds: list[tuple[float, float | None]] = []
+    bounds: list[tuple[float | None, float | None]] = []
     for program in programs:
         if program.id in committed:
             amount = committed[program.id]

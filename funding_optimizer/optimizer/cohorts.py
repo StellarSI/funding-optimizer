@@ -97,7 +97,7 @@ def _cohort_constraints(cohorts: list[Cohort], budget: float) -> tuple[
     np.ndarray,
     np.ndarray,
     np.ndarray,
-    list[tuple[float, float | None]],
+    list[tuple[float | None, float | None]],
 ]:
     n = len(cohorts)
     # Equality: the cohort shares must sum to the whole budget.
@@ -117,7 +117,7 @@ def _cohort_constraints(cohorts: list[Cohort], budget: float) -> tuple[
         limits.append(float(cohort.max_share) * float(budget))
     a_ub = np.array(rows, dtype=float)
     b_ub = np.array(limits, dtype=float)
-    bounds: list[tuple[float, float | None]] = [(0.0, None)] * n
+    bounds: list[tuple[float | None, float | None]] = [(0.0, None)] * n
     return a_ub, b_ub, a_eq, b_eq, bounds
 
 
