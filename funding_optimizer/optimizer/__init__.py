@@ -34,6 +34,14 @@ from .diagnostics import (
     diagnose_infeasibility,
     explain_result,
 )
+from .sensitivity import (
+    SensitivityEntry,
+    SensitivityReport,
+    binding_constraints,
+    constraint_slacks,
+    sensitivity_analysis,
+    validate_caps,
+)
 from .solver import HiGHSolver, Solver, SolverResult, solve_with_lexicographic_tie_break
 
 __all__ = [
@@ -47,11 +55,15 @@ __all__ = [
     "PhasedAllocationResult",
     "Program",
     "RegionFloor",
+    "SensitivityEntry",
+    "SensitivityReport",
     "Solver",
     "SolverResult",
+    "binding_constraints",
     "build_allocation_problem",
     "build_multi_asset_allocation_problem",
     "build_phase_problem",
+    "constraint_slacks",
     "diagnose_infeasibility",
     "explain_result",
     "maximize_reach_objective",
@@ -60,10 +72,12 @@ __all__ = [
     "multi_asset_constraints",
     "multi_asset_objective",
     "regional_floor_constraints",
+    "sensitivity_analysis",
     "solve_allocation",
     "solve_multi_asset_allocation",
     "solve_phased_allocation",
     "solve_with_lexicographic_tie_break",
+    "validate_caps",
     "validate_multi_asset",
     "validate_phase_caps",
 ]
