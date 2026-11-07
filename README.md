@@ -60,8 +60,14 @@ The optimizer ships three deterministic, testable building blocks under
   multi-asset Stellar budgets with validated asset codes.
 * ``diagnostics.py`` — actionable infeasibility diagnostics (issue #15) that
   explain why a constraint set admits no allocation and what to change.
+* ``schedule.py`` — phased allocation for budget schedules (issue #20) that
+  spreads a budget arriving over time across phases and carries unallocated
+  budget forward when programs cannot absorb their full tranche.
+* ``sensitivity.py`` — sensitivity analysis for caps, minimums, and fairness
+  (issue #21) that re-solves the problem at ``base ± δ`` per parameter and
+  reports binding constraints and objective deltas.
 
-Both are verified by tests under ``tests/`` and the project lints, type-checks
+All are verified by tests under ``tests/`` and the project lints, type-checks
 and tests cleanly with ``make check``.
 
 ```python
@@ -172,6 +178,89 @@ Note: allocations are balanced per tranche — the per-unit `expected_reach`
 is treated as equal across assets, and there is no cross-asset coupling yet
 (e.g. capping the total value held in one asset). Multi-asset runs return a
 `MultiAssetResult` whose `allocation` maps asset → program id → amount.
+
+### Phased allocation for budget schedules
+
+Grant budgets often arrive in tranches over time (monthly, quarterly, ...).
+`BudgetSchedule` models that disbursement plan, and `solve_phased_allocation`
+allocates each phase in order: a phase receives its scheduled amount plus any
+budget carried forward from earlier phases that its programs could not
+absorb. Regional floors and program `min_share` minimums apply to each
+phase's available budget, and optional per-program `phase_caps` bound how
+much of a phase a program may absorb:
+
+```python
+from funding_optimizer.optimizer import (
+    BudgetPhase,
+    BudgetSchedule,
+    Program,
+    RegionFloor,
+    solve_phased_allocation,
+)
+
+programs = [
+    Program(id="cash-transfers-ng", region="Africa", expected_reach=12_000, min_share=0.10),
+    Program(id="education-ke", region="Africa", expected_reach=4_500),
+    Program(id="health-gh", region="Asia", expected_reach=7_800),
+]
+schedule = BudgetSchedule([
+    BudgetPhase(id="2026-Q1", amount=150_000),
+    BudgetPhase(id="2026-Q2", amount=100_000),
+])
+
+result = solve_phased_allocation(
+    programs,
+    schedule,
+    [RegionFloor(region="Africa", floor=0.50)],
+    phase_caps={"cash-transfers-ng": 0.60},   # at most 60% of a phase per program
+)
+print(result.cumulative_allocation)           # program id -> total over all phases
+print(result.unallocated)                     # budget carried out of the final phase
+for phase in result.phases:
+    print(phase.phase_id, phase.available, phase.carry_out)
+```
+
+A phase whose constraint set is infeasible stops the run: later phases
+depend on the carried budget, so they are not attempted. The failing phase
+in the returned result carries `diagnostics` naming the conflict (for
+example `phase_cap_below_min_share`) and the relaxation that restores
+feasibility.
+
+### Sensitivity analysis
+
+`sensitivity_analysis` re-solves the allocation problem at `base ± δ` for
+every region floor, program `min_share`, and optional per-program `caps`
+fraction, and reports how the objective moves. Objectives are negated
+reach, so a positive `objective_delta` means reach was lost:
+
+```python
+from funding_optimizer.optimizer import (
+    Program,
+    RegionFloor,
+    sensitivity_analysis,
+)
+
+programs = [
+    Program(id="cash-transfers-ng", region="Africa", expected_reach=12_000, min_share=0.20),
+    Program(id="education-ke", region="Asia", expected_reach=4_500),
+]
+
+report = sensitivity_analysis(
+    programs,
+    250_000,
+    [RegionFloor(region="Africa", floor=0.50), RegionFloor(region="Asia", floor=0.20)],
+    caps={"cash-transfers-ng": 0.50},
+    perturbation=0.05,
+)
+print(report.binding_parameters)  # parameters tight at the base optimum
+for entry in report.entries:
+    print(entry.parameter, entry.perturbation, entry.objective_value, entry.binding)
+```
+
+A constraint is *binding* when it holds with equality at the base optimum;
+only binding constraints move the objective when perturbed. Perturbations
+that become infeasible (for example floors summing over 100% of the budget)
+are reported with `success=False` and a diagnostic instead of raising.
 
 ## Getting started
 
