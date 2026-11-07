@@ -32,6 +32,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from math import isfinite
+from typing import cast
 
 from .constraints import (
     Program,
@@ -128,7 +129,7 @@ def _allocate(
         return False, None, None, str(exc)
 
     if caps:
-        bounds = list(problem["bounds"])  # type: ignore[arg-type]
+        bounds = cast(list[tuple[float | None, float | None]], problem["bounds"])
         for position, program in enumerate(programs):
             cap = caps.get(program.id)
             if cap is None:
