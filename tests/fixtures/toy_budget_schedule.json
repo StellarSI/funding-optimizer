@@ -1,0 +1,41 @@
+{
+  "description": "Two-phase toy budget schedule with per-program absorption caps and a known optimum (issue #20). Each phase allocates its available budget (scheduled amount plus carried-forward remainder); caps below the phase total force carry-over.",
+  "programs": [
+    { "id": "p1", "region": "Africa", "expected_reach": 10.0, "min_share": 0.1 },
+    { "id": "p2", "region": "Africa", "expected_reach": 6.0, "min_share": 0.0 },
+    { "id": "p3", "region": "Asia", "expected_reach": 8.0, "min_share": 0.0 }
+  ],
+  "phases": [
+    { "id": "q1", "amount": 100.0 },
+    { "id": "q2", "amount": 100.0 }
+  ],
+  "region_floors": [
+    { "region": "Africa", "floor": 0.3 }
+  ],
+  "phase_caps": { "p1": 0.5, "p2": 0.15, "p3": 0.25 },
+  "expected": {
+    "phases": [
+      {
+        "id": "q1",
+        "available": 100.0,
+        "carry_in": 0.0,
+        "allocation": { "p1": 50.0, "p2": 15.0, "p3": 25.0 },
+        "carry_out": 10.0,
+        "objective_value": -790.0
+      },
+      {
+        "id": "q2",
+        "available": 110.0,
+        "carry_in": 10.0,
+        "allocation": { "p1": 55.0, "p2": 16.5, "p3": 27.5 },
+        "carry_out": 11.0,
+        "objective_value": -869.0
+      }
+    ],
+    "cumulative_allocation": { "p1": 105.0, "p2": 31.5, "p3": 52.5 },
+    "total_budget": 200.0,
+    "total_allocated": 189.0,
+    "unallocated": 11.0,
+    "objective_value": -1659.0
+  }
+}
