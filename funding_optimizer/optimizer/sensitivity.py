@@ -203,7 +203,9 @@ def constraint_slacks(
             for program in programs
             if program.region == region_floor.region
         )
-        slacks[f"{_KIND_FLOOR}:{region_floor.region}"] = allocated - region_floor.floor * budget_value
+        slacks[f"{_KIND_FLOOR}:{region_floor.region}"] = (
+            allocated - region_floor.floor * budget_value
+        )
     for program in programs:
         slacks[f"{_KIND_MIN_SHARE}:{program.id}"] = (
             allocation_by_id[program.id] - program.min_share * budget_value

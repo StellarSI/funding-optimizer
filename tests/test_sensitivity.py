@@ -26,7 +26,8 @@ _FIXTURE = Path(__file__).parent / "fixtures" / "toy_sensitivity_lp.json"
 
 
 def _fixture_data() -> dict:
-    return json.loads(_FIXTURE.read_text(encoding="utf-8"))
+    data: dict = json.loads(_FIXTURE.read_text(encoding="utf-8"))
+    return data
 
 
 def _fixture_programs() -> list[Program]:
@@ -98,8 +99,10 @@ def test_uncapped_base_binds_the_asia_floor() -> None:
     assert report.binding_parameters == ("region_floor:Asia",)
     by_parameter = {(entry.parameter, entry.perturbation): entry for entry in report.entries}
     assert by_parameter[("region_floor:Asia", 0.1)].objective_delta == pytest.approx(20.0, abs=1e-6)
-    assert by_parameter[("region_floor:Asia", -0.1)].objective_delta == pytest.approx(-20.0, abs=1e-6)
-    assert by_parameter[("program_min_share:p2", 0.1)].objective_delta == pytest.approx(40.0, abs=1e-6)
+    asia_neg = by_parameter[("region_floor:Asia", -0.1)]
+    p2_pos = by_parameter[("program_min_share:p2", 0.1)]
+    assert asia_neg.objective_delta == pytest.approx(-20.0, abs=1e-6)
+    assert p2_pos.objective_delta == pytest.approx(40.0, abs=1e-6)
 
 
 def test_perturbation_clamped_into_unit_interval() -> None:

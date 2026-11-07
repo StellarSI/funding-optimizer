@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import cast
 
 import numpy as np
 import pytest
@@ -89,7 +90,9 @@ def test_without_caps_each_phase_is_fully_allocated() -> None:
         Program(id="p1", region="Africa", expected_reach=10.0),
         Program(id="p2", region="Asia", expected_reach=5.0),
     ]
-    schedule = BudgetSchedule([BudgetPhase(id="q1", amount=100.0), BudgetPhase(id="q2", amount=60.0)])
+    schedule = BudgetSchedule(
+        [BudgetPhase(id="q1", amount=100.0), BudgetPhase(id="q2", amount=60.0)]
+    )
     result = solve_phased_allocation(programs, schedule, [])
 
     assert result.success is True
@@ -188,7 +191,10 @@ def test_regional_floors_above_budget_raise() -> None:
 
 def test_schedule_must_be_a_budget_schedule() -> None:
     with pytest.raises(TypeError, match="BudgetSchedule"):
-        solve_phased_allocation(_fixture_programs(), [BudgetPhase(id="q1", amount=10.0)])  # type: ignore[arg-type]
+        solve_phased_allocation(
+            _fixture_programs(),
+            cast("BudgetSchedule", [BudgetPhase(id="q1", amount=10.0)]),
+        )
 
 
 def test_at_least_one_program_required() -> None:

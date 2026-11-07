@@ -62,7 +62,8 @@ class BudgetPhase:
             raise TypeError(f"BudgetPhase amount must be a real number, got {self.amount!r}")
         amount = float(self.amount)
         if not isfinite(amount) or amount <= 0.0:
-            raise ValueError(f"BudgetPhase amount must be a positive, finite number, got {amount!r}")
+            msg = f"BudgetPhase amount must be a positive, finite number, got {amount!r}"
+        raise ValueError(msg)
         object.__setattr__(self, "amount", amount)
 
 
@@ -317,7 +318,8 @@ def solve_phased_allocation(
 
         n = len(programs)
         allocation = {
-            program.id: float(solved.allocation[position]) for position, program in enumerate(programs)
+            program.id: float(solved.allocation[position])
+            for position, program in enumerate(programs)
         }
         carry_out = float(solved.allocation[n])
         for program_id, amount in allocation.items():

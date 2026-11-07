@@ -20,6 +20,11 @@ from .constraints import (
     solve_multi_asset_allocation,
     validate_multi_asset,
 )
+from .diagnostics import (
+    InfeasibilityDiagnostic,
+    diagnose_infeasibility,
+    explain_result,
+)
 from .schedule import (
     BudgetPhase,
     BudgetSchedule,
@@ -28,11 +33,6 @@ from .schedule import (
     build_phase_problem,
     solve_phased_allocation,
     validate_phase_caps,
-)
-from .diagnostics import (
-    InfeasibilityDiagnostic,
-    diagnose_infeasibility,
-    explain_result,
 )
 from .sensitivity import (
     SensitivityEntry,
