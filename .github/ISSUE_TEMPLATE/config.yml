@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Maintainer contact
+    url: https://github.com/devrabiuhussain
+    about: Reach the maintainer for non-public security or operational matters.
+  - name: Security advisory
+    url: https://github.com/StellarSI/funding-optimizer/security/advisories
+    about: Report security vulnerabilities privately (see SECURITY.md).
