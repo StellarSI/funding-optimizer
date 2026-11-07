@@ -59,16 +59,22 @@ class ScenarioComparison:
     scenarios: list[ScenarioResult]
 
     def delta_reach(self, baseline_name: str, candidate_name: str) -> float:
-        """Calculate the reach delta between a baseline and candidate scenario."""
+        """Calculate the positive reach delta between a baseline and candidate scenario."""
         scenario_map = {s.name: s for s in self.scenarios}
         if baseline_name not in scenario_map:
             raise KeyError(f"Baseline scenario not found: {baseline_name}")
         if candidate_name not in scenario_map:
             raise KeyError(f"Candidate scenario not found: {candidate_name}")
 
-        base_val = scenario_map[baseline_name].objective_value or 0.0
-        cand_val = scenario_map[candidate_name].objective_value or 0.0
-        return cand_val - base_val
+        base_s = scenario_map[baseline_name]
+        cand_s = scenario_map[candidate_name]
+
+        if not base_s.success or base_s.objective_value is None:
+            raise ValueError(f"Baseline scenario '{baseline_name}' is infeasible or unoptimized")
+        if not cand_s.success or cand_s.objective_value is None:
+            raise ValueError(f"Candidate scenario '{candidate_name}' is infeasible or unoptimized")
+
+        return float(cand_s.objective_value - base_s.objective_value)
 
 
 def evaluate_scenario(config: ScenarioConfig) -> ScenarioResult:
@@ -77,18 +83,21 @@ def evaluate_scenario(config: ScenarioConfig) -> ScenarioResult:
 
     alloc_map: dict[str, float] = {}
     region_map: dict[str, float] = {}
+    positive_reach: float | None = None
 
     if result.success and result.allocation is not None:
         for p, amt_val in zip(config.programs, result.allocation, strict=True):
             amt = float(amt_val)
             alloc_map[p.id] = amt
             region_map[p.region] = region_map.get(p.region, 0.0) + amt
+        if result.objective_value is not None:
+            positive_reach = float(abs(result.objective_value))
 
     return ScenarioResult(
         name=config.name,
         budget=config.budget,
         success=result.success,
-        objective_value=result.objective_value,
+        objective_value=positive_reach,
         allocations=alloc_map,
         regional_totals=region_map,
     )
@@ -171,12 +180,24 @@ def run_monte_carlo_simulation(
         result = solve_allocation(perturbed_programs, budget, region_floors)
         if result.success and result.allocation is not None:
             successes += 1
-            obj = float(result.objective_value) if result.objective_value is not None else 0.0
+            obj = float(abs(result.objective_value)) if result.objective_value is not None else 0.0
             objectives.append(obj)
             successful_allocations.append([float(x) for x in result.allocation])
 
     success_rate = successes / config.num_trials
-    obj_array = np.array(objectives) if objectives else np.array([0.0])
+    if objectives:
+        obj_array = np.array(objectives)
+        mean_obj = float(np.mean(obj_array))
+        std_obj = float(np.std(obj_array))
+        p05_obj = float(np.percentile(obj_array, 5))
+        p50_obj = float(np.percentile(obj_array, 50))
+        p95_obj = float(np.percentile(obj_array, 95))
+    else:
+        mean_obj = float("nan")
+        std_obj = float("nan")
+        p05_obj = float("nan")
+        p50_obj = float("nan")
+        p95_obj = float("nan")
 
     if successful_allocations:
         mean_allocs = np.mean(np.array(successful_allocations), axis=0)
@@ -188,10 +209,10 @@ def run_monte_carlo_simulation(
         num_trials=config.num_trials,
         seed=config.seed,
         success_rate=success_rate,
-        mean_objective=float(np.mean(obj_array)),
-        std_objective=float(np.std(obj_array)),
-        p05_objective=float(np.percentile(obj_array, 5)),
-        p50_objective=float(np.percentile(obj_array, 50)),
-        p95_objective=float(np.percentile(obj_array, 95)),
+        mean_objective=mean_obj,
+        std_objective=std_obj,
+        p05_objective=p05_obj,
+        p50_objective=p50_obj,
+        p95_objective=p95_obj,
         per_program_mean_allocation=per_program_map,
     )

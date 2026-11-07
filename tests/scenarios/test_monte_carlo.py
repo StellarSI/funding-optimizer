@@ -9,6 +9,8 @@ Verifies:
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from funding_optimizer.optimizer.constraints import Program, RegionFloor
@@ -61,11 +63,9 @@ def test_scenario_comparison_evaluates_correctly(
     assert comparison.scenarios[0].success is True
     assert comparison.scenarios[1].success is True
 
-    # Higher budget should achieve higher objective reach
+    # Higher budget achieves strictly positive additional reach gain
     delta = comparison.delta_reach("conservative", "expanded")
-    assert (
-        delta < 0
-    )  # Linear objective is negated for linprog minimization (larger reach is more negative)
+    assert delta > 0
     assert comparison.scenarios[1].budget > comparison.scenarios[0].budget
 
 
@@ -120,6 +120,33 @@ def test_scenario_validation_boundaries() -> None:
     with pytest.raises(ValueError, match="Must provide at least one scenario"):
         compare_scenarios([])
 
+    from funding_optimizer.scenarios.engine import ScenarioComparison, ScenarioResult
+
+    infeasible_comparison = ScenarioComparison(
+        scenarios=[
+            ScenarioResult(
+                name="valid",
+                budget=100.0,
+                success=True,
+                objective_value=50.0,
+                allocations={},
+                regional_totals={},
+            ),
+            ScenarioResult(
+                name="failed",
+                budget=100.0,
+                success=False,
+                objective_value=None,
+                allocations={},
+                regional_totals={},
+            ),
+        ]
+    )
+    with pytest.raises(ValueError, match="is infeasible or unoptimized"):
+        infeasible_comparison.delta_reach("valid", "failed")
+    with pytest.raises(ValueError, match="is infeasible or unoptimized"):
+        infeasible_comparison.delta_reach("failed", "valid")
+
 
 def test_monte_carlo_validation_boundaries(base_programs: list[Program]) -> None:
     """Verifies parameter validation on Monte Carlo configuration."""
@@ -137,11 +164,11 @@ def test_monte_carlo_validation_boundaries(base_programs: list[Program]) -> None
         run_monte_carlo_simulation(base_programs, -500.0, [], cfg)
 
 
-def test_monte_carlo_handles_intermittent_solver_failures(
+def test_monte_carlo_handles_intermittent_and_total_solver_failures(
     base_programs: list[Program],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Verifies Monte Carlo accurately aggregates only successful trials when failures occur."""
+    """Verifies Monte Carlo accurately aggregates successful trials and returns NaN on total failure."""
     import numpy as np
 
     import funding_optimizer.scenarios.engine as engine_mod
@@ -158,7 +185,7 @@ def test_monte_carlo_handles_intermittent_solver_failures(
                 success=True,
                 status=0,
                 message="Optimal",
-                objective_value=100.0,
+                objective_value=-100.0,
                 allocation=np.array([400.0, 350.0, 250.0]),
             )
         return SolverResult(
@@ -176,6 +203,18 @@ def test_monte_carlo_handles_intermittent_solver_failures(
 
     assert summary.num_trials == 4
     assert summary.success_rate == 0.5
+    assert summary.mean_objective == 100.0
     assert summary.per_program_mean_allocation["p-edu"] == 400.0
     assert summary.per_program_mean_allocation["p-health"] == 350.0
     assert summary.per_program_mean_allocation["p-solar"] == 250.0
+
+    # Total failure case -> objectives are NaN
+    def mock_all_fail(*args: object, **kwargs: object) -> SolverResult:
+        return SolverResult(
+            success=False, status=1, message="Infeasible", objective_value=None, allocation=None
+        )
+
+    monkeypatch.setattr(engine_mod, "solve_allocation", mock_all_fail)
+    fail_summary = run_monte_carlo_simulation(base_programs, 1000.0, [], cfg)
+    assert fail_summary.success_rate == 0.0
+    assert math.isnan(fail_summary.mean_objective)
