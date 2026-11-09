@@ -78,13 +78,13 @@ def test_median_and_interpolated_quantiles_are_ordered() -> None:
         assert prediction.evaluation.pinball_loss >= 0.0
 
 
-def test_median_pinball_loss_is_mean_absolute_error() -> None:
+def test_median_pinball_loss_is_half_mean_absolute_error() -> None:
     predictions = delivery_delay_quantiles(_dataset(), _horizon(), quantiles=(0.5,))
     main = next(p for p in predictions if p.key.program == "cash-transfers-ng")
     assert main.value == pytest.approx(20.0)
-    # Pinball loss at q=0.5 is mean(|y - yhat|) = (10+0+10)/3 = 20/3.
+    # Pinball loss at q=0.5 is 0.5 * mean(|y - yhat|) = 0.5 * (10+0+10)/3 = 10/3.
     assert main.evaluation is not None
-    assert main.evaluation.pinball_loss == pytest.approx(20.0 / 3.0)
+    assert main.evaluation.pinball_loss == pytest.approx(10.0 / 3.0)
 
 
 def test_single_observation_group_predicts_its_value() -> None:
