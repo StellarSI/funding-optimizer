@@ -262,6 +262,68 @@ only binding constraints move the objective when perturbed. Perturbations
 that become infeasible (for example floors summing over 100% of the budget)
 are reported with `success=False` and a diagnostic instead of raising.
 
+## Disbursement forecasting
+
+Forecasting lives under `funding_optimizer/forecasting`. The first piece is
+the **forecast dataset and time-window schema** (issue #22): the typed
+contract that every forecast model consumes and produces.
+
+- `ObservationWindow` — the closed `[start, end]` history a model is fitted
+  on. Bounds are inclusive and normalized from `date`, `datetime`, or
+  ISO-8601 strings; a start after the end is rejected.
+- `ForecastHorizon` — the future window a model predicts, with a `day`,
+  `week`, or `month` `frequency` and a `periods` count that rounds partial
+  steps up.
+- `ForecastTarget` — what is being predicted: `cash_out_rate`,
+  `delivery_delay`, or `funding_gap`.
+- `ForecastKey` / `ForecastRow` — every observation identifies a program, a
+  region, an asset, and a time window, plus the observed value for its
+  target. Asset codes are validated and normalized like `Budget` assets.
+- `ForecastDataset` — rows scoped to a single target and a single
+  observation window, built from CSV/JSON-style records with
+  `ForecastDataset.from_records` and grouped per identifier with
+  `group_by_key()`.
+- `ForecastPrediction` — a typed point prediction that carries its key,
+  target, horizon, `method`, and optional `ForecastEvaluation` metadata
+  (observation count, MAE, RMSE, pinball loss, evaluation date).
+
+```python
+from datetime import date
+
+from funding_optimizer.forecasting import (
+    ForecastDataset,
+    ForecastTarget,
+    ObservationWindow,
+)
+
+dataset = ForecastDataset.from_records(
+    [
+        {
+            "program": "cash-transfers-ng",
+            "region": "Africa",
+            "asset": "USDC",
+            "window": {"start": "2025-10-01", "end": "2025-12-31"},
+            "value": 0.82,
+        },
+    ],
+    target=ForecastTarget.CASH_OUT_RATE,
+    observation=ObservationWindow(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+)
+print(dataset.rows[0].value)            # 0.82
+print(dataset.rows[0].window.end)       # 2025-12-31
+```
+
+Rows that do not identify a program, region, asset, and time window are
+rejected at the boundary with a `ValueError` naming the missing field, so
+incomplete observations never reach a model. The schema also rejects rows
+outside the declared observation window, rows for a different target, empty
+datasets, malformed windows, and values outside their target's range
+(cash-out rates outside `[0, 1]`, negative delivery delays, non-finite
+values).
+
+The schema describes data only: forecasting recommends, and never signs or
+submits payouts.
+
 ## Getting started
 
 ### Prerequisites
