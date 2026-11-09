@@ -102,7 +102,7 @@ the perturbed solve succeeded, and whether the constraint is binding at the
 base optimum. Perturbations that become infeasible are reported with
 `success=False` and a diagnostic, not raised.
 
-### Forecast dataset and time-window schema
+### Forecast dataset and models
 
 Disbursement forecasting consumes a typed dataset
 (`funding_optimizer/forecasting/schema.py`):
@@ -123,6 +123,17 @@ Disbursement forecasting consumes a typed dataset
 - `ForecastPrediction` — a typed prediction carrying its key, target,
   horizon, method, and optional `ForecastEvaluation` metadata (observation
   count, MAE, RMSE, pinball loss, evaluation date).
+
+Models train only on the historical observation window and return typed
+predictions with horizon, method, and evaluation metadata:
+
+- `cash_out_rate_baseline` (`baseline.py`) — predicts each identifier's
+  cash-out rate as the historical mean (`historical-mean`), with in-sample
+  MAE/RMSE evaluation over that identifier's observations.
+- `delivery_delay_quantiles` (`delays.py`) — predicts delivery-delay
+  quantiles from each identifier's empirical distribution (linear
+  interpolation), returning one prediction per (identifier, quantile) with
+  method `historical-quantile-<q>p` and pinball-loss evaluation.
 
 Rows that do not identify a program, region, asset, and time window are
 rejected with a `ValueError` naming the missing field. So are rows outside
@@ -153,7 +164,8 @@ so malformed plans fail loudly at the boundary.
 
 ## On-chain boundary
 
-Delivery-time and cash-out forecast *models*, and SDP-compatible export,
-are on the roadmap: this release ships the forecast dataset schema, which
-describes data only. Where the optimizer touches on-chain data it reads
-only; it never signs or submits payouts.
+The cash-out-rate baseline and delivery-delay quantile models ship as
+transparent, history-only forecasters over the typed schema. Funding-gap
+projections, richer forecast models, and SDP-compatible export remain on
+the roadmap. Where the optimizer touches on-chain data it reads only; it
+never signs or submits payouts.
