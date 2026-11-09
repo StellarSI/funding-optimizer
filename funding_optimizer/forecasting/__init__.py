@@ -1,4 +1,4 @@
-"""Disbursement forecasting: the forecast dataset and time-window schema.
+"""Disbursement forecasting: schema, baselines, and delay predictions.
 
 The forecasting package describes what funders need before committing
 funds: observed cash-out rates, delivery delays, and funding gaps keyed by
@@ -9,6 +9,8 @@ The optimizer recommends allocations and never signs or submits payouts;
 nothing in this package moves funds or performs network calls.
 """
 
+from .baseline import cash_out_rate_baseline
+from .delays import delivery_delay_quantiles
 from .schema import (
     ForecastDataset,
     ForecastEvaluation,
@@ -32,5 +34,7 @@ __all__ = [
     "ForecastTarget",
     "ObservationWindow",
     "TimeWindow",
+    "cash_out_rate_baseline",
+    "delivery_delay_quantiles",
     "missing_identifiers",
 ]
