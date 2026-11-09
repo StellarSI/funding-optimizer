@@ -102,6 +102,34 @@ the perturbed solve succeeded, and whether the constraint is binding at the
 base optimum. Perturbations that become infeasible are reported with
 `success=False` and a diagnostic, not raised.
 
+### Forecast dataset and time-window schema
+
+Disbursement forecasting consumes a typed dataset
+(`funding_optimizer/forecasting/schema.py`):
+
+- `ObservationWindow` — the closed `[start, end]` history a model is fitted
+  on. Bounds are inclusive and normalized from `date`, `datetime`, or
+  ISO-8601 strings.
+- `ForecastHorizon` — the future window a model predicts, with a `day`,
+  `week`, or `month` frequency and a `periods` count that rounds partial
+  steps up.
+- `ForecastTarget` — `cash_out_rate`, `delivery_delay`, or `funding_gap`.
+- `ForecastKey` / `ForecastRow` — every row identifies a program, a region,
+  an asset, and a time window, plus the observed value for its target.
+  Asset codes are validated and normalized like `Budget` asset codes.
+- `ForecastDataset` — rows scoped to one target and one observation
+  window, read from raw records with `from_records` and grouped per
+  identifier with `group_by_key()`.
+- `ForecastPrediction` — a typed prediction carrying its key, target,
+  horizon, method, and optional `ForecastEvaluation` metadata (observation
+  count, MAE, RMSE, pinball loss, evaluation date).
+
+Rows that do not identify a program, region, asset, and time window are
+rejected with a `ValueError` naming the missing field. So are rows outside
+the observation window, rows for a different target, empty datasets,
+malformed windows, and values outside their target's range (cash-out rates
+outside `[0, 1]`, negative delivery delays, non-finite values).
+
 ### AllocationPlan
 
 The result of an optimization run serializes to a stable JSON contract
@@ -119,9 +147,13 @@ so malformed plans fail loudly at the boundary.
 - Infeasible constraint sets (e.g. regional floors or `min_share` values
   exceeding the budget) produce an infeasibility diagnostic instead of a
   plan, naming the conflicting requirement and a suggested relaxation.
+- Forecast records that do not identify a program, region, asset, and time
+  window are rejected by `ForecastDataset.from_records` with a `ValueError`
+  naming the missing field.
 
 ## On-chain boundary
 
-Delivery-time forecasting, cash-out prediction, and SDP-compatible export
-are on the roadmap, not implemented in this release. Where the optimizer
-touches on-chain data it reads only; it never signs or submits payouts.
+Delivery-time and cash-out forecast *models*, and SDP-compatible export,
+are on the roadmap: this release ships the forecast dataset schema, which
+describes data only. Where the optimizer touches on-chain data it reads
+only; it never signs or submits payouts.
