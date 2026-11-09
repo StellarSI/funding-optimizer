@@ -264,9 +264,9 @@ are reported with `success=False` and a diagnostic instead of raising.
 
 ## Disbursement forecasting
 
-Forecasting lives under `funding_optimizer/forecasting`. The first piece is
-the **forecast dataset and time-window schema** (issue #22): the typed
-contract that every forecast model consumes and produces.
+Forecasting lives under `funding_optimizer/forecasting`. It is built on the
+**forecast dataset and time-window schema** (issue #22): the typed contract
+every forecast model consumes and produces.
 
 - `ObservationWindow` — the closed `[start, end]` history a model is fitted
   on. Bounds are inclusive and normalized from `date`, `datetime`, or
@@ -321,8 +321,112 @@ datasets, malformed windows, and values outside their target's range
 (cash-out rates outside `[0, 1]`, negative delivery delays, non-finite
 values).
 
-The schema describes data only: forecasting recommends, and never signs or
-submits payouts.
+### Historical baseline cash-out rates
+
+`cash_out_rate_baseline` (`funding_optimizer/forecasting/baseline.py`,
+issue #23) is a transparent baseline: it predicts each identifier's cash-out
+rate as the historical mean of that identifier's observations in the
+training dataset. It trains only on the dataset's observation window and
+returns one typed `ForecastPrediction` per identifier (in first-seen order)
+with the requested horizon, method `historical-mean`, and in-sample
+evaluation metadata (observation count, MAE, RMSE).
+
+```python
+from datetime import date
+
+from funding_optimizer.forecasting import (
+    ForecastDataset,
+    ForecastHorizon,
+    ForecastTarget,
+    ObservationWindow,
+    cash_out_rate_baseline,
+)
+
+dataset = ForecastDataset.from_records(
+    [
+        {
+            "program": "cash-transfers-ng",
+            "region": "Africa",
+            "asset": "USDC",
+            "window": {"start": "2025-10-01", "end": "2025-12-31"},
+            "value": 0.82,
+        },
+        {
+            "program": "cash-transfers-ng",
+            "region": "Africa",
+            "asset": "USDC",
+            "window": {"start": "2025-07-01", "end": "2025-09-30"},
+            "value": 0.78,
+        },
+    ],
+    target=ForecastTarget.CASH_OUT_RATE,
+    observation=ObservationWindow(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+)
+horizon = ForecastHorizon(start=date(2026, 1, 1), end=date(2026, 3, 31), frequency="month")
+
+(prediction,) = cash_out_rate_baseline(dataset, horizon)
+print(prediction.method)                        # historical-mean
+print(prediction.value)                         # 0.8
+print(prediction.evaluation.n_observations)     # 2
+```
+
+### Delivery-delay quantile predictions
+
+`delivery_delay_quantiles` (`funding_optimizer/forecasting/delays.py`,
+issue #24) predicts delivery delays from the empirical quantiles of each
+identifier's historical delays (linear interpolation, no distribution
+assumed). It consumes a `delivery_delay` dataset and returns one typed
+`ForecastPrediction` per (identifier, quantile) with the requested horizon,
+method `historical-quantile-<q>p`, and evaluation metadata (observation
+count and pinball loss at that quantile).
+
+```python
+from datetime import date
+
+from funding_optimizer.forecasting import (
+    ForecastDataset,
+    ForecastHorizon,
+    ForecastTarget,
+    ObservationWindow,
+    delivery_delay_quantiles,
+)
+
+dataset = ForecastDataset.from_records(
+    [
+        {
+            "program": "cash-transfers-ng",
+            "region": "Africa",
+            "asset": "USDC",
+            "window": {"start": "2025-10-01", "end": "2025-12-31"},
+            "value": 10.0,
+        },
+        {
+            "program": "cash-transfers-ng",
+            "region": "Africa",
+            "asset": "USDC",
+            "window": {"start": "2025-07-01", "end": "2025-09-30"},
+            "value": 20.0,
+        },
+        {
+            "program": "cash-transfers-ng",
+            "region": "Africa",
+            "asset": "USDC",
+            "window": {"start": "2025-04-01", "end": "2025-06-30"},
+            "value": 30.0,
+        },
+    ],
+    target=ForecastTarget.DELIVERY_DELAY,
+    observation=ObservationWindow(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+)
+horizon = ForecastHorizon(start=date(2026, 1, 1), end=date(2026, 3, 31), frequency="month")
+
+predictions = delivery_delay_quantiles(dataset, horizon, quantiles=(0.25, 0.5, 0.75))
+print([p.method for p in predictions])          # ['historical-quantile-25p', ...]
+print([p.value for p in predictions])           # [15.0, 20.0, 25.0]
+print(predictions[1].evaluation.pinball_loss)   # 6.666...
+```
+
+Forecasting recommends allocations and never signs or submits payouts.
 
 ## Getting started
 
