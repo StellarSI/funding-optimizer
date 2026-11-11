@@ -134,6 +134,10 @@ predictions with horizon, method, and evaluation metadata:
   quantiles from each identifier's empirical distribution (linear
   interpolation), returning one prediction per (identifier, quantile) with
   method `historical-quantile-<q>p` and pinball-loss evaluation.
+- `funding_gap_baseline` (`gaps.py`) — projects each identifier's funding
+  gap (shortfall of funds for a window; positive = shortfall, negative =
+  surplus) as the historical mean (`historical-mean`), with in-sample
+  MAE/RMSE evaluation over that identifier's observations.
 
 Rows that do not identify a program, region, asset, and time window are
 rejected with a `ValueError` naming the missing field. So are rows outside
@@ -164,8 +168,8 @@ so malformed plans fail loudly at the boundary.
 
 ## On-chain boundary
 
-The cash-out-rate baseline and delivery-delay quantile models ship as
-transparent, history-only forecasters over the typed schema. Funding-gap
-projections, richer forecast models, and SDP-compatible export remain on
-the roadmap. Where the optimizer touches on-chain data it reads only; it
-never signs or submits payouts.
+The cash-out-rate baseline, delivery-delay quantile model, and
+funding-gap projection baseline ship as transparent, history-only
+forecasters over the typed schema. Richer forecast models and
+SDP-compatible export remain on the roadmap. Where the optimizer touches
+on-chain data it reads only; it never signs or submits payouts.
