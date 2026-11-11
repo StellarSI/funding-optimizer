@@ -426,6 +426,55 @@ print([p.value for p in predictions])           # [15.0, 20.0, 25.0]
 print(predictions[1].evaluation.pinball_loss)   # 6.666...
 ```
 
+### Funding-gap projections
+
+`funding_gap_baseline` (`funding_optimizer/forecasting/gaps.py`,
+issue #25) projects a funding gap per identifier as the historical mean of
+that identifier's observed gaps. The schema defines the gap as the
+shortfall (positive) or surplus (negative) of funds for a window: a
+positive prediction is a projected shortfall, a negative one a projected
+surplus. Predictions carry the requested horizon, method `historical-mean`,
+and in-sample evaluation metadata (observation count, MAE, RMSE).
+
+```python
+from datetime import date
+
+from funding_optimizer.forecasting import (
+    ForecastDataset,
+    ForecastHorizon,
+    ForecastTarget,
+    ObservationWindow,
+    funding_gap_baseline,
+)
+
+dataset = ForecastDataset.from_records(
+    [
+        {
+            "program": "cash-transfers-ng",
+            "region": "Africa",
+            "asset": "USDC",
+            "window": {"start": "2025-10-01", "end": "2025-12-31"},
+            "value": 120000.0,
+        },
+        {
+            "program": "cash-transfers-ng",
+            "region": "Africa",
+            "asset": "USDC",
+            "window": {"start": "2025-07-01", "end": "2025-09-30"},
+            "value": -40000.0,
+        },
+    ],
+    target=ForecastTarget.FUNDING_GAP,
+    observation=ObservationWindow(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+)
+horizon = ForecastHorizon(start=date(2026, 1, 1), end=date(2026, 3, 31), frequency="month")
+
+(prediction,) = funding_gap_baseline(dataset, horizon)
+print(prediction.method)                        # historical-mean
+print(prediction.value)                         # 40000.0
+print(prediction.evaluation.n_observations)     # 2
+```
+
 Forecasting recommends allocations and never signs or submits payouts.
 
 ## Getting started
@@ -604,7 +653,7 @@ Allocation models affect real people. Treat outputs as decision support:
 ## Roadmap
 
 - [x] Constraint-based allocation solver
-- [ ] Delivery-time and cash-out forecasting
+- [x] Delivery-time and cash-out forecasting
 - [ ] Scenario comparison reports
 - [ ] SDP-compatible disbursement file export
 - [ ] Integration with `fraud-detection-sdk` risk scores
