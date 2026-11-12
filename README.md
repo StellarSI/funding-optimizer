@@ -475,6 +475,63 @@ print(prediction.value)                         # 40000.0
 print(prediction.evaluation.n_observations)     # 2
 ```
 
+### Reusable program, region, asset, and calendar features
+
+`funding_optimizer/forecasting/features.py` builds typed, reusable features
+from validated forecast observations so downstream models can share a
+consistent representation. Features are keyed by **program**, **region**,
+**asset**, and **calendar** attributes of each observation window.
+
+- `build_calendar_features(window)` extracts calendar signals from a
+  `TimeWindow` (start/end year, month, quarter, ISO week, day-of-year,
+  `window_days`, and boundary-crossing flags).
+- `build_feature_rows(dataset)` returns one `FeatureRow` per dataset row in
+  row order, combining identifiers, target/value, and calendar features.
+  `FeatureRow.to_feature_map()` flattens the row into a scalar feature map.
+- `build_key_features(dataset)` aggregates per `(program, region, asset)`
+  identifier in first-seen order, summarizing observation counts, value
+  statistics, window-span statistics, and calendar coverage.
+
+```python
+from datetime import date
+
+from funding_optimizer.forecasting import (
+    ForecastDataset,
+    ForecastTarget,
+    ObservationWindow,
+    build_feature_rows,
+    build_key_features,
+)
+
+dataset = ForecastDataset.from_records(
+    [
+        {
+            "program": "cash-transfers-ng",
+            "region": "Africa",
+            "asset": "USDC",
+            "window": {"start": "2025-10-01", "end": "2025-12-31"},
+            "value": 0.82,
+        },
+        {
+            "program": "cash-transfers-ng",
+            "region": "Africa",
+            "asset": "USDC",
+            "window": {"start": "2025-07-01", "end": "2025-09-30"},
+            "value": 0.78,
+        },
+    ],
+    target=ForecastTarget.CASH_OUT_RATE,
+    observation=ObservationWindow(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+)
+
+row = build_feature_rows(dataset)[0]
+print(row.program, row.region, row.asset)  # cash-transfers-ng Africa USDC
+print(row.calendar.start_quarter, row.calendar.window_days)  # 4 92
+
+(key_features,) = build_key_features(dataset)
+print(key_features.n_observations, key_features.start_quarters)  # 2 (3, 4)
+```
+
 Forecasting recommends allocations and never signs or submits payouts.
 
 ## Getting started
