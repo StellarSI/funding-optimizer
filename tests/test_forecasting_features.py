@@ -56,9 +56,7 @@ def _dataset() -> ForecastDataset:
 
 
 def test_build_calendar_features_extracts_window_calendar_attributes() -> None:
-    features = build_calendar_features(
-        TimeWindow(start=date(2025, 10, 1), end=date(2025, 12, 31))
-    )
+    features = build_calendar_features(TimeWindow(start=date(2025, 10, 1), end=date(2025, 12, 31)))
 
     assert features.start_year == 2025
     assert features.start_month == 10
@@ -76,9 +74,7 @@ def test_build_calendar_features_extracts_window_calendar_attributes() -> None:
 
 
 def test_build_calendar_features_tracks_quarter_and_year_boundaries() -> None:
-    horizon = ForecastHorizon(
-        start=date(2025, 12, 15), end=date(2026, 1, 14), frequency="day"
-    )
+    horizon = ForecastHorizon(start=date(2025, 12, 15), end=date(2026, 1, 14), frequency="day")
     features = build_calendar_features(horizon)
 
     assert features.start_quarter == 4

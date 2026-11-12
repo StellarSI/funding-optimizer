@@ -57,9 +57,7 @@ __all__ = [
 
 def _require_dataset(dataset: object) -> ForecastDataset:
     if not isinstance(dataset, ForecastDataset):
-        raise TypeError(
-            f"dataset must be a ForecastDataset, got {type(dataset).__name__}"
-        )
+        raise TypeError(f"dataset must be a ForecastDataset, got {type(dataset).__name__}")
     return dataset
 
 
@@ -172,9 +170,7 @@ def identifier_feature_map(key: ForecastKey) -> dict[str, str]:
 def calendar_feature_map(features: CalendarFeatures) -> dict[str, int | bool | str]:
     """Flatten calendar features into a reusable scalar feature map."""
     if not isinstance(features, CalendarFeatures):
-        raise TypeError(
-            f"features must be CalendarFeatures, got {type(features).__name__}"
-        )
+        raise TypeError(f"features must be CalendarFeatures, got {type(features).__name__}")
     return {
         "window_start": features.start_date.isoformat(),
         "window_end": features.end_date.isoformat(),
