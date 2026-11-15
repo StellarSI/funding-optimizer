@@ -248,9 +248,7 @@ def run_backtest(
         if test_start < data.observation.start or test_end > data.observation.end:
             continue
         try:
-            train_observation = ObservationWindow(
-                start=data.observation.start, end=split_end
-            )
+            train_observation = ObservationWindow(start=data.observation.start, end=split_end)
             test_horizon = ForecastHorizon(
                 start=test_start, end=test_end, frequency=template.frequency
             )

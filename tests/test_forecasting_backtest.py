@@ -231,9 +231,7 @@ def test_backtest_fold_and_result_types_are_validated() -> None:
 
 def test_backtest_respects_min_train_rows() -> None:
     # Require 2 training rows: first possible split has only 1 row, so first fold is skipped.
-    result = run_backtest(
-        _dataset(), _horizon_template(), cash_out_rate_baseline, min_train_rows=2
-    )
+    result = run_backtest(_dataset(), _horizon_template(), cash_out_rate_baseline, min_train_rows=2)
 
     assert len(result.folds) == 2
     assert [len(f.train_rows) for f in result.folds] == [2, 3]

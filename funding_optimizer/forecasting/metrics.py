@@ -153,9 +153,7 @@ class CalibrationBin:
         nominal = _require_quantile(self.nominal_quantile, "nominal_quantile")
         coverage = _require_finite_number(self.empirical_coverage, "empirical_coverage")
         if not 0.0 <= coverage <= 1.0:
-            raise ValueError(
-                f"empirical_coverage must be in [0, 1], got {coverage!r}"
-            )
+            raise ValueError(f"empirical_coverage must be in [0, 1], got {coverage!r}")
         if isinstance(self.n_observations, bool) or not isinstance(self.n_observations, int):
             raise TypeError(
                 f"n_observations must be an integer, got {type(self.n_observations).__name__}"
@@ -186,13 +184,9 @@ class CalibrationResult:
                 raise TypeError(
                     f"bins[{index}] must be a CalibrationBin, got {type(item).__name__}"
                 )
-        mean_error = _require_finite_number(
-            self.mean_calibration_error, "mean_calibration_error"
-        )
+        mean_error = _require_finite_number(self.mean_calibration_error, "mean_calibration_error")
         if mean_error < 0.0:
-            raise ValueError(
-                f"mean_calibration_error must be non-negative, got {mean_error!r}"
-            )
+            raise ValueError(f"mean_calibration_error must be non-negative, got {mean_error!r}")
         object.__setattr__(self, "bins", bins)
         object.__setattr__(self, "mean_calibration_error", mean_error)
 
