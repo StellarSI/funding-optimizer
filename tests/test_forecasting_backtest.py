@@ -208,7 +208,7 @@ def test_backtest_fold_and_result_types_are_validated() -> None:
             actuals=fold.actuals,
             predictions=fold.predictions,
         )
-    with pytest.raises(TypeError, match="predictions\\[0\\]"):
+    with pytest.raises(TypeError, match=r"predictions\[0\]"):
         BacktestFold(
             train_observation=fold.train_observation,
             horizon=fold.horizon,
@@ -216,9 +216,6 @@ def test_backtest_fold_and_result_types_are_validated() -> None:
             actuals=fold.actuals,
             predictions=("bad",),  # type: ignore[arg-type]
         )
-    with pytest.raises(ValueError, match="at least one quantile bin"):
-        # Ensure ForecastEvaluation remains the schema type in result validation path.
-        pass
 
     with pytest.raises(TypeError, match="evaluation must be"):
         BacktestResult(
