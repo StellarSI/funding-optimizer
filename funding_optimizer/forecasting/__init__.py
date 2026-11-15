@@ -1,4 +1,4 @@
-"""Disbursement forecasting: schema, baselines, delay, and gap predictions.
+"""Disbursement forecasting: schema, baselines, delay, gap, backtest, and metrics.
 
 The forecasting package describes what funders need before committing
 funds: observed cash-out rates, delivery delays, and funding gaps keyed by
@@ -9,6 +9,7 @@ The optimizer recommends allocations and never signs or submits payouts;
 nothing in this package moves funds or performs network calls.
 """
 
+from .backtest import BacktestFold, BacktestResult, Forecaster, run_backtest
 from .baseline import cash_out_rate_baseline
 from .delays import delivery_delay_quantiles
 from .features import (
@@ -22,6 +23,13 @@ from .features import (
     identifier_feature_map,
 )
 from .gaps import funding_gap_baseline
+from .metrics import (
+    CalibrationBin,
+    CalibrationResult,
+    mean_absolute_error,
+    pinball_loss,
+    quantile_calibration,
+)
 from .schema import (
     ForecastDataset,
     ForecastEvaluation,
@@ -36,7 +44,11 @@ from .schema import (
 )
 
 __all__ = [
+    "BacktestFold",
+    "BacktestResult",
     "CalendarFeatures",
+    "CalibrationBin",
+    "CalibrationResult",
     "FeatureRow",
     "ForecastDataset",
     "ForecastEvaluation",
@@ -45,6 +57,7 @@ __all__ = [
     "ForecastPrediction",
     "ForecastRow",
     "ForecastTarget",
+    "Forecaster",
     "KeyFeatures",
     "ObservationWindow",
     "TimeWindow",
@@ -56,5 +69,9 @@ __all__ = [
     "delivery_delay_quantiles",
     "funding_gap_baseline",
     "identifier_feature_map",
+    "mean_absolute_error",
     "missing_identifiers",
+    "pinball_loss",
+    "quantile_calibration",
+    "run_backtest",
 ]
