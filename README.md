@@ -532,6 +532,70 @@ print(row.calendar.start_quarter, row.calendar.window_days)  # 4 92
 print(key_features.n_observations, key_features.start_quarters)  # 2 (3, 4)
 ```
 
+### Time-based backtesting harness
+
+`run_backtest` (`funding_optimizer/forecasting/backtest.py`) evaluates a
+forecast method over expanding historical windows without lookahead. For each
+fold it trains only on rows whose windows end before the test horizon, calls
+the forecaster with `(train_dataset, test_horizon)`, and returns typed
+`ForecastPrediction` values carrying their horizon, method, and evaluation
+metadata alongside held-out actuals.
+
+```python
+from datetime import date
+
+from funding_optimizer.forecasting import (
+    ForecastDataset,
+    ForecastHorizon,
+    ForecastTarget,
+    ObservationWindow,
+    cash_out_rate_baseline,
+    run_backtest,
+)
+
+dataset = ForecastDataset.from_records(
+    [
+        {"program": "p", "region": "r", "asset": "USDC",
+         "window": {"start": "2025-01-01", "end": "2025-01-10"}, "value": 0.6},
+        {"program": "p", "region": "r", "asset": "USDC",
+         "window": {"start": "2025-01-11", "end": "2025-01-20"}, "value": 0.8},
+        {"program": "p", "region": "r", "asset": "USDC",
+         "window": {"start": "2025-01-21", "end": "2025-01-30"}, "value": 0.7},
+    ],
+    target=ForecastTarget.CASH_OUT_RATE,
+    observation=ObservationWindow(start=date(2025, 1, 1), end=date(2025, 1, 30)),
+)
+horizon = ForecastHorizon(start=date(2025, 1, 11), end=date(2025, 1, 20), frequency="day")
+
+result = run_backtest(dataset, horizon, cash_out_rate_baseline)
+print(len(result.folds))                           # 2
+print(result.predictions[0].horizon, result.predictions[0].method)
+print(result.evaluation.mae)                       # aggregate MAE over matched pairs
+```
+
+### Forecast metrics
+
+`funding_optimizer/forecasting/metrics.py` provides reusable evaluation
+metrics over forecast actuals and predictions:
+
+- `mean_absolute_error(actual, predicted)` �?" mean absolute error for point
+  forecasts.
+- `pinball_loss(actual, predicted, quantile)` �?" asymmetric quantile loss for
+  a single quantile (the median, `0.5`, yields half the MAE).
+- `quantile_calibration(actual, predicted_quantiles)` �?" empirical coverage
+  per nominal quantile and mean absolute calibration error, measuring whether
+  predicted quantiles match observed outcomes.
+
+```python
+from funding_optimizer.forecasting import mean_absolute_error, pinball_loss, quantile_calibration
+
+print(mean_absolute_error([1.0, 2.0, 3.0], [1.0, 2.0, 4.0]))     # 0.333...
+print(pinball_loss([10.0, 20.0, 30.0], 20.0, 0.5))               # 3.333...
+
+cal = quantile_calibration([1.0, 2.0, 3.0, 4.0], {0.5: 2.5, 0.75: 3.5})
+print(cal.bins[0].empirical_coverage, cal.mean_calibration_error)
+```
+
 Forecasting recommends allocations and never signs or submits payouts.
 
 ## Getting started

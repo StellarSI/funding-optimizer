@@ -138,6 +138,13 @@ predictions with horizon, method, and evaluation metadata:
   gap (shortfall of funds for a window; positive = shortfall, negative =
   surplus) as the historical mean (`historical-mean`), with in-sample
   MAE/RMSE evaluation over that identifier's observations.
+- `run_backtest` (`backtest.py`) — a time-based expanding-window harness
+  that evaluates a forecaster fold-by-fold without lookahead, returning
+  typed predictions with horizon, method, and evaluation metadata plus
+  held-out actuals and aggregate MAE/RMSE over matched pairs.
+- `metrics.py` — reusable evaluation metrics: `mean_absolute_error`,
+  `pinball_loss`, and `quantile_calibration` (empirical coverage and mean
+  calibration error per nominal quantile).
 
 Rows that do not identify a program, region, asset, and time window are
 rejected with a `ValueError` naming the missing field. So are rows outside
@@ -168,8 +175,9 @@ so malformed plans fail loudly at the boundary.
 
 ## On-chain boundary
 
-The cash-out-rate baseline, delivery-delay quantile model, and
-funding-gap projection baseline ship as transparent, history-only
-forecasters over the typed schema. Richer forecast models and
-SDP-compatible export remain on the roadmap. Where the optimizer touches
-on-chain data it reads only; it never signs or submits payouts.
+The cash-out-rate baseline, delivery-delay quantile model, funding-gap
+projection baseline, time-based backtesting harness, and forecast metrics
+ship as transparent, history-only components over the typed schema. Richer
+forecast models and SDP-compatible export remain on the roadmap. Where the
+optimizer touches on-chain data it reads only; it never signs or submits
+payouts.
