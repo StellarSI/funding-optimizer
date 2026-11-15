@@ -17,7 +17,6 @@ from funding_optimizer.forecasting import (
     BacktestFold,
     BacktestResult,
     ForecastDataset,
-    ForecastEvaluation,
     ForecastHorizon,
     ForecastKey,
     ForecastPrediction,
