@@ -144,7 +144,7 @@ def test_bad_argument_types_raise_typed_errors() -> None:
     with pytest.raises(TypeError, match="sequence of fractions"):
         prediction_intervals(_dataset(), _horizon(), quantiles=0.5)  # type: ignore[arg-type]
     with pytest.raises(TypeError, match=r"quantiles\[0\] must be a real number"):
-        prediction_intervals(_dataset(), _horizon(), quantiles=("0.5",))  # type: ignore[list-item]
+        prediction_intervals(_dataset(), _horizon(), quantiles=("0.5",))  # type: ignore[arg-type]
     with pytest.raises(ValueError, match="strictly inside"):
         prediction_intervals(_dataset(), _horizon(), quantiles=(0.0,))
     with pytest.raises(ValueError, match="at least one value"):
