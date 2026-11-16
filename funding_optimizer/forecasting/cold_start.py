@@ -63,8 +63,7 @@ def _require_requested_keys(keys: object) -> tuple[ForecastKey, ...]:
         raise TypeError("requested_keys must be a sequence of ForecastKey values")
     if isinstance(keys, (str, bytes)) or not isinstance(keys, Sequence):
         raise TypeError(
-            "requested_keys must be a sequence of ForecastKey values, "
-            f"got {type(keys).__name__}"
+            "requested_keys must be a sequence of ForecastKey values, " f"got {type(keys).__name__}"
         )
     result: list[ForecastKey] = []
     for index, key in enumerate(keys):
@@ -99,7 +98,11 @@ def _evaluation(
 
 
 def _pool(
-    rows: Sequence[ForecastRow], *, region: str | None = None, program: str | None = None, asset: str
+    rows: Sequence[ForecastRow],
+    *,
+    region: str | None = None,
+    program: str | None = None,
+    asset: str,
 ) -> tuple[ForecastRow, ...]:
     selected: list[ForecastRow] = []
     for row in rows:

@@ -58,9 +58,7 @@ def _validate_quantiles(quantiles: object) -> tuple[float, ...]:
             )
         value = float(quantile)
         if value <= 0.0 or value >= 1.0:
-            raise ValueError(
-                f"quantiles[{index}] must be strictly inside (0, 1), got {value}"
-            )
+            raise ValueError(f"quantiles[{index}] must be strictly inside (0, 1), got {value}")
         result.append(value)
     if not result:
         raise ValueError("quantiles must contain at least one value")
@@ -122,8 +120,7 @@ class IntervalPrediction:
             raise ValueError(f"quantile must be strictly inside (0, 1), got {value}")
         if not isinstance(self.prediction, ForecastPrediction):
             raise TypeError(
-                "prediction must be a ForecastPrediction, "
-                f"got {type(self.prediction).__name__}"
+                "prediction must be a ForecastPrediction, " f"got {type(self.prediction).__name__}"
             )
         object.__setattr__(self, "quantile", value)
 
