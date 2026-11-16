@@ -643,6 +643,45 @@ cal = quantile_calibration([1.0, 2.0, 3.0, 4.0], {0.5: 2.5, 0.75: 3.5})
 print(cal.bins[0].empirical_coverage, cal.mean_calibration_error)
 ```
 
+### Prediction intervals and uncertainty metadata
+
+`prediction_intervals` (`funding_optimizer/forecasting/uncertainty.py`)
+attaches prediction intervals and uncertainty metadata to historical forecasts.
+For each identifier group it computes the historical mean and the empirical
+quantiles of residuals (`value - mean`) over the training observation window,
+returning each bound as a typed `ForecastPrediction` with horizon, method, and
+evaluation metadata (pinball loss at that quantile).
+
+```python
+from datetime import date
+
+from funding_optimizer.forecasting import (
+    ForecastDataset,
+    ForecastHorizon,
+    ForecastTarget,
+    ObservationWindow,
+    prediction_intervals,
+)
+
+dataset = ForecastDataset.from_records(
+    [
+        {"program": "cash-transfers-ng", "region": "Africa", "asset": "USDC",
+         "window": {"start": "2025-10-01", "end": "2025-12-31"}, "value": 0.6},
+        {"program": "cash-transfers-ng", "region": "Africa", "asset": "USDC",
+         "window": {"start": "2025-07-01", "end": "2025-09-30"}, "value": 0.8},
+        {"program": "cash-transfers-ng", "region": "Africa", "asset": "USDC",
+         "window": {"start": "2025-04-01", "end": "2025-06-30"}, "value": 1.0},
+    ],
+    target=ForecastTarget.CASH_OUT_RATE,
+    observation=ObservationWindow(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+)
+horizon = ForecastHorizon(start=date(2026, 1, 1), end=date(2026, 3, 31), frequency="month")
+
+low, mid, high = prediction_intervals(dataset, horizon, quantiles=(0.25, 0.5, 0.75))
+print(low.prediction.method, low.prediction.value)   # historical-residual-quantile-0.25p 0.7
+print(mid.prediction.evaluation.pinball_loss)        # uncertainty metadata
+```
+
 Forecasting recommends allocations and never signs or submits payouts.
 
 ## Getting started

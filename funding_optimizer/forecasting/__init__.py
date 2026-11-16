@@ -31,6 +31,7 @@ from .metrics import (
     pinball_loss,
     quantile_calibration,
 )
+from .uncertainty import IntervalPrediction, prediction_intervals
 from .schema import (
     ForecastDataset,
     ForecastEvaluation,
@@ -51,6 +52,7 @@ __all__ = [
     "CalibrationBin",
     "CalibrationResult",
     "FeatureRow",
+    "IntervalPrediction",
     "ForecastDataset",
     "ForecastEvaluation",
     "ForecastHorizon",
@@ -74,6 +76,7 @@ __all__ = [
     "mean_absolute_error",
     "missing_identifiers",
     "pinball_loss",
+    "prediction_intervals",
     "quantile_calibration",
     "run_backtest",
 ]
