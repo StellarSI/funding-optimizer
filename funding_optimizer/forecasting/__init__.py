@@ -11,6 +11,7 @@ nothing in this package moves funds or performs network calls.
 
 from .backtest import BacktestFold, BacktestResult, Forecaster, run_backtest
 from .baseline import cash_out_rate_baseline
+from .cold_start import cold_start_baseline
 from .delays import delivery_delay_quantiles
 from .features import (
     CalendarFeatures,
@@ -66,6 +67,7 @@ __all__ = [
     "build_key_features",
     "calendar_feature_map",
     "cash_out_rate_baseline",
+    "cold_start_baseline",
     "delivery_delay_quantiles",
     "funding_gap_baseline",
     "identifier_feature_map",

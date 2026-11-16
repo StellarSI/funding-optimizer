@@ -475,6 +475,53 @@ print(prediction.value)                         # 40000.0
 print(prediction.evaluation.n_observations)     # 2
 ```
 
+### Cold-start handling for new programs and regions
+
+`cold_start_baseline` (`funding_optimizer/forecasting/cold_start.py`)
+produces typed predictions for requested identifiers even when a program or
+region has no historical observations in the training dataset. It trains only
+on the historical observation window and falls back deterministically:
+
+1. Exact `(program, region, asset)` history -> `historical-mean`
+2. Same region and asset, different/new program -> `cold-start-region-mean`
+3. Same program and asset, different/new region -> `cold-start-program-mean`
+4. Same asset across the dataset -> `cold-start-asset-mean`
+
+If no observations exist for the requested asset, prediction fails with a
+`ValueError` naming the missing history. Returned predictions carry the
+requested horizon, method, and evaluation metadata computed over the fallback
+pool.
+
+```python
+from datetime import date
+
+from funding_optimizer.forecasting import (
+    ForecastDataset,
+    ForecastHorizon,
+    ForecastKey,
+    ForecastTarget,
+    ObservationWindow,
+    cold_start_baseline,
+)
+
+dataset = ForecastDataset.from_records(
+    [
+        {"program": "cash-transfers-ng", "region": "Africa", "asset": "USDC",
+         "window": {"start": "2025-10-01", "end": "2025-12-31"}, "value": 0.82},
+        {"program": "education-ke", "region": "Africa", "asset": "USDC",
+         "window": {"start": "2025-10-01", "end": "2025-12-31"}, "value": 0.74},
+    ],
+    target=ForecastTarget.CASH_OUT_RATE,
+    observation=ObservationWindow(start=date(2025, 1, 1), end=date(2025, 12, 31)),
+)
+horizon = ForecastHorizon(start=date(2026, 1, 1), end=date(2026, 3, 31), frequency="month")
+new_program = ForecastKey(program="health-gh", region="Africa", asset="USDC")
+
+(prediction,) = cold_start_baseline(dataset, horizon, [new_program])
+print(prediction.method)  # cold-start-region-mean
+print(prediction.value)   # 0.78
+```
+
 ### Reusable program, region, asset, and calendar features
 
 `funding_optimizer/forecasting/features.py` builds typed, reusable features
