@@ -25,7 +25,6 @@ from .schema import (
     ForecastEvaluation,
     ForecastHorizon,
     ForecastPrediction,
-    ForecastRow,
 )
 
 __all__ = ["IntervalPrediction", "prediction_intervals"]
