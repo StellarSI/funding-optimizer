@@ -1,4 +1,4 @@
-"""Tests for the Horizon ingestion client (issue #32).
+﻿"""Tests for the Horizon ingestion client (issue #32).
 
 Sanitized fixtures only; every transport is a fake and no test performs a
 network call. Retry, pagination, rate-limit, malformed-record, and error
@@ -160,7 +160,7 @@ def test_parse_payment_record_issued_asset() -> None:
     )
     payment = parse_payment_record(record, index=3)
 
-    assert payment.asset == "USDC:" + "A" * 55
+    assert payment.asset == "USDC:" + "G" + "A" * 55
     assert payment.amount == pytest.approx(12.5)
 
 
@@ -389,7 +389,7 @@ def test_iter_payments_parses_typed_records() -> None:
     payments = client.get_payments("GABC")
 
     assert [p.id for p in payments] == ["p1", "p2"]
-    assert payments[0].asset == "USDC:" + "B" * 55
+    assert payments[0].asset == "USDC:" + "G" + "B" * 55
     assert payments[0].amount == pytest.approx(100.0)
     assert payments[1].asset == "XLM"
 

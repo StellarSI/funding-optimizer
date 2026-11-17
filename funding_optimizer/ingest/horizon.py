@@ -409,16 +409,16 @@ class HorizonClient:
                         raise HorizonEnvelopeError(
                             f"Horizon request to {url} returned a non-JSON body: {exc}"
                         ) from exc
-                if status == 429 or status >= 500:
-                    pass  # retryable; handled below
                 if 300 <= status < 400:
                     raise HorizonError(
                         f"Horizon request to {url} returned an unexpected redirect (HTTP {status})"
                     )
-                raise HorizonClientError(
-                    f"Horizon request to {url} failed with HTTP {status}",
-                    status_code=status,
-                )
+                if status != 429 and status < 500:
+                    raise HorizonClientError(
+                        f"Horizon request to {url} failed with HTTP {status}",
+                        status_code=status,
+                    )
+                # 429 and 5xx are retryable; fall through to retry handling.
 
             attempt += 1
             if attempt > self.max_retries:
