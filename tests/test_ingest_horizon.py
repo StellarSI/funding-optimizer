@@ -225,10 +225,12 @@ def test_transient_5xx_is_retried_then_succeeds() -> None:
 
 
 def test_rate_limited_response_is_retried_and_honors_retry_after() -> None:
-    session = FakeSession([
-        FakeResponse(429, headers={"Retry-After": "7"}),
-        _page([]),
-    ])
+    session = FakeSession(
+        [
+            FakeResponse(429, headers={"Retry-After": "7"}),
+            _page([]),
+        ]
+    )
     clock = FakeClock()
     client = _client(session, max_retries=2, clock=clock)
 
@@ -238,10 +240,12 @@ def test_rate_limited_response_is_retried_and_honors_retry_after() -> None:
 
 
 def test_retry_after_is_capped_by_max_retry_after() -> None:
-    session = FakeSession([
-        FakeResponse(429, headers={"Retry-After": "3600"}),
-        _page([]),
-    ])
+    session = FakeSession(
+        [
+            FakeResponse(429, headers={"Retry-After": "3600"}),
+            _page([]),
+        ]
+    )
     clock = FakeClock()
     client = HorizonClient(
         BASE_URL,
@@ -285,10 +289,12 @@ def test_client_error_4xx_is_not_retried() -> None:
 
 
 def test_transport_failure_is_retried_then_raises() -> None:
-    session = FakeSession([
-        HorizonTransportError("connection reset"),
-        HorizonTransportError("connection reset"),
-    ])
+    session = FakeSession(
+        [
+            HorizonTransportError("connection reset"),
+            HorizonTransportError("connection reset"),
+        ]
+    )
     client = _client(session, max_retries=1, backoff_factor=0.5)
 
     with pytest.raises(HorizonTransportError):
@@ -297,10 +303,12 @@ def test_transport_failure_is_retried_then_raises() -> None:
 
 
 def test_transport_failure_recovers_on_retry() -> None:
-    session = FakeSession([
-        HorizonTransportError("connection reset"),
-        _page([_payment_record()]),
-    ])
+    session = FakeSession(
+        [
+            HorizonTransportError("connection reset"),
+            _page([_payment_record()]),
+        ]
+    )
     client = _client(session, max_retries=2, backoff_factor=0.5)
 
     page = client.get_page("/accounts/GABC/payments")
@@ -308,9 +316,11 @@ def test_transport_failure_recovers_on_retry() -> None:
 
 
 def test_non_json_body_on_success_raises_envelope_error() -> None:
-    session = FakeSession([
-        FakeResponse(200, json_error=ValueError("no json")),
-    ])
+    session = FakeSession(
+        [
+            FakeResponse(200, json_error=ValueError("no json")),
+        ]
+    )
     client = _client(session, max_retries=2)
 
     with pytest.raises(HorizonEnvelopeError):
@@ -325,10 +335,12 @@ def test_non_json_body_on_success_raises_envelope_error() -> None:
 
 def test_pagination_follows_next_links() -> None:
     page2_url = f"{BASE_URL}/accounts/GABC/payments?cursor=abc"
-    session = FakeSession([
-        _page([_payment_record(id="1"), _payment_record(id="2")], next_url=page2_url),
-        _page([_payment_record(id="3")]),
-    ])
+    session = FakeSession(
+        [
+            _page([_payment_record(id="1"), _payment_record(id="2")], next_url=page2_url),
+            _page([_payment_record(id="3")]),
+        ]
+    )
     client = _client(session)
 
     records = list(client.iter_records("/accounts/GABC/payments"))
@@ -339,9 +351,11 @@ def test_pagination_follows_next_links() -> None:
 
 def test_pagination_stops_at_max_records() -> None:
     page2_url = f"{BASE_URL}/accounts/GABC/payments?cursor=abc"
-    session = FakeSession([
-        _page([_payment_record(id="1"), _payment_record(id="2")], next_url=page2_url),
-    ])
+    session = FakeSession(
+        [
+            _page([_payment_record(id="1"), _payment_record(id="2")], next_url=page2_url),
+        ]
+    )
     client = _client(session)
 
     records = list(client.iter_records("/accounts/GABC/payments", max_records=1))
@@ -351,14 +365,22 @@ def test_pagination_stops_at_max_records() -> None:
 
 
 def test_iter_payments_parses_typed_records() -> None:
-    session = FakeSession([
-        _page([
-            _payment_record(id="p1", asset_type="credit_alphanum4",
-                            asset_code="USDC", asset_issuer="G" + "B" * 55,
-                            amount="100"),
-            _payment_record(id="p2", amount="7"),
-        ]),
-    ])
+    session = FakeSession(
+        [
+            _page(
+                [
+                    _payment_record(
+                        id="p1",
+                        asset_type="credit_alphanum4",
+                        asset_code="USDC",
+                        asset_issuer="G" + "B" * 55,
+                        amount="100",
+                    ),
+                    _payment_record(id="p2", amount="7"),
+                ]
+            ),
+        ]
+    )
     client = _client(session)
 
     payments = client.get_payments("GABC")
@@ -377,9 +399,11 @@ def test_iter_payments_rejects_invalid_account() -> None:
 
 
 def test_iter_payments_surfaces_malformed_record_with_index() -> None:
-    session = FakeSession([
-        _page([_payment_record(), _payment_record(amount="oops")]),
-    ])
+    session = FakeSession(
+        [
+            _page([_payment_record(), _payment_record(amount="oops")]),
+        ]
+    )
     client = _client(session)
 
     with pytest.raises(HorizonRecordError, match="record 1"):
@@ -395,9 +419,11 @@ def test_envelope_missing_records_list_rejected() -> None:
 
 
 def test_envelope_malformed_record_entry_rejected() -> None:
-    session = FakeSession([
-        FakeResponse(200, {"_embedded": {"records": ["not-an-object"]}}),
-    ])
+    session = FakeSession(
+        [
+            FakeResponse(200, {"_embedded": {"records": ["not-an-object"]}}),
+        ]
+    )
     client = _client(session)
 
     with pytest.raises(HorizonRecordError):
@@ -451,10 +477,12 @@ def test_build_url_appends_query_params() -> None:
 
 def test_get_payments_uses_absolute_next_href() -> None:
     page2_url = f"{BASE_URL}/accounts/GABC/payments?cursor=xyz"
-    session = FakeSession([
-        _page([_payment_record(id="1")], next_url=page2_url),
-        _page([_payment_record(id="2")]),
-    ])
+    session = FakeSession(
+        [
+            _page([_payment_record(id="1")], next_url=page2_url),
+            _page([_payment_record(id="2")]),
+        ]
+    )
     client = _client(session)
 
     payments = client.get_payments("GABC")

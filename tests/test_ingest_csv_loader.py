@@ -109,9 +109,9 @@ def test_load_programs_missing_cells_become_empty_and_fail_clearly() -> None:
         load_programs(io.StringIO(csv_text))
 
 
-COHORTS_CSV = "id,program_ids,min_share,max_share\n\
-c1,\"p1;p2\",0.1,0.8\n\
-c2,p3,0.0,1.0\n"
+COHORTS_CSV = 'id,program_ids,min_share,max_share\n\
+c1,"p1;p2",0.1,0.8\n\
+c2,p3,0.0,1.0\n'
 
 
 def test_load_cohorts_happy_path() -> None:
@@ -128,13 +128,13 @@ def test_load_cohorts_validates_membership_against_programs() -> None:
     cohorts = load_cohorts(io.StringIO(COHORTS_CSV), programs=programs)
     assert cohorts[0].program_ids == ("p1", "p2")
 
-    bad = "id,program_ids\nc1,\"p1;unknown\"\n"
+    bad = 'id,program_ids\nc1,"p1;unknown"\n'
     with pytest.raises(CsvLoaderError, match="unknown program"):
         load_cohorts(io.StringIO(bad), programs=programs)
 
 
 def test_load_cohorts_rejects_double_assignment() -> None:
-    csv_text = "id,program_ids\nc1,\"p1;p2\"\nc2,p2\n"
+    csv_text = 'id,program_ids\nc1,"p1;p2"\nc2,p2\n'
     with pytest.raises(CsvLoaderError, match="multiple cohorts"):
         load_cohorts(io.StringIO(csv_text))
 
@@ -152,13 +152,13 @@ def test_load_cohorts_min_shares_cannot_sum_over_one() -> None:
 
 
 def test_load_cohorts_empty_member_list_rejected() -> None:
-    csv_text = "id,program_ids\nc1,\";;;\"\n"
+    csv_text = 'id,program_ids\nc1,";;;"\n'
     with pytest.raises(CsvLoaderError, match="at least one program"):
         load_cohorts(io.StringIO(csv_text))
 
 
 def test_load_cohorts_duplicate_member_rejected() -> None:
-    csv_text = "id,program_ids\nc1,\"p1;p1\"\n"
+    csv_text = 'id,program_ids\nc1,"p1;p1"\n'
     with pytest.raises(CsvLoaderError, match="duplicate"):
         load_cohorts(io.StringIO(csv_text))
 
@@ -240,5 +240,3 @@ def test_load_allocation_inputs_optional_parts_may_be_omitted() -> None:
 def test_load_programs_from_missing_path_reports_error(tmp_path: Path) -> None:
     with pytest.raises(CsvLoaderError, match="cannot open"):
         load_programs(tmp_path / "does-not-exist.csv")
-
-

@@ -385,19 +385,20 @@ class HorizonClient:
         attempt = 0
         while True:
             self._throttle()
+            response: Response | None = None
+            status: int | None = None
+            error: Exception | None = None
             try:
                 response = self._session.get(
                     url,
                     headers={"Accept": "application/json"},
                     timeout=self.timeout,
                 )
-            except Exception as exc:  # noqa: BLE001 - any transport failure is retryable
-                status: int | None = None
-                error: Exception | None = exc
-                response = None
-            else:
                 status = response.status_code
-                error = None
+            except Exception as exc:  # noqa: BLE001 - any transport failure is retryable
+                error = exc
+                response = None
+                status = None
 
             if response is not None:
                 assert status is not None
@@ -487,9 +488,7 @@ class HorizonClient:
         validated: list[dict[str, Any]] = []
         for index, record in enumerate(records):
             if not isinstance(record, dict):
-                raise HorizonRecordError(
-                    f"record {index}: expected an object, got {record!r}"
-                )
+                raise HorizonRecordError(f"record {index}: expected an object, got {record!r}")
             validated.append(record)
         links = payload.get("_links")
         next_url: str | None = None
@@ -534,7 +533,7 @@ class HorizonClient:
                 raise HorizonError(f"max_records must be an integer, got {max_records!r}")
             if max_records < 1:
                 raise HorizonError(f"max_records must be a positive integer, got {max_records}")
-        url = self._build_url(path, params)
+        url: str | None = self._build_url(path, params)
         seen = 0
         while url is not None:
             page = self.get_page(url)

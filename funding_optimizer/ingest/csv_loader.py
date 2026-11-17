@@ -108,14 +108,14 @@ def _read_rows(
         record = dict(zip(normalized, (cell.strip() for cell in raw)))
         if len(raw) > len(normalized):
             # Record extra cells so nothing silently disappears.
-            extras = [cell.strip() for cell in raw[len(normalized):]]
+            extras = [cell.strip() for cell in raw[len(normalized) :]]
             if any(extras):
                 raise CsvLoaderError(
                     f"{label} row {offset}: expected at most {len(normalized)} "
                     f"column(s), got {len(raw)}"
                 )
         elif len(raw) < len(normalized):
-            record.update({column: "" for column in normalized[len(raw):]})
+            record.update({column: "" for column in normalized[len(raw) :]})
         rows.append(record)
         line_numbers.append(offset)
     return rows, line_numbers
@@ -154,9 +154,7 @@ def load_programs(source: str | Path | TextIO) -> list[Program]:
     Expected columns: ``id``, ``region``, ``expected_reach``, and the
     optional ``min_share`` (a fraction in ``[0, 1]``; defaults to ``0``).
     """
-    rows, line_numbers = _read_rows(
-        source, required_columns=_PROGRAM_COLUMNS, label="programs"
-    )
+    rows, line_numbers = _read_rows(source, required_columns=_PROGRAM_COLUMNS, label="programs")
     programs: list[Program] = []
     seen: set[str] = set()
     for record, row in zip(rows, line_numbers):
@@ -179,8 +177,9 @@ def load_programs(source: str | Path | TextIO) -> list[Program]:
             row=row,
         )
         programs.append(
-            Program(id=program_id, region=region, expected_reach=expected_reach,
-                    min_share=min_share)
+            Program(
+                id=program_id, region=region, expected_reach=expected_reach, min_share=min_share
+            )
         )
     if not programs:
         raise CsvLoaderError("programs: no program rows found in input")
@@ -202,9 +201,7 @@ def load_cohorts(
     a program may belong to at most one cohort. Cohort ``min_share``
     values may not sum over ``1.0``.
     """
-    rows, line_numbers = _read_rows(
-        source, required_columns=_COHORT_COLUMNS, label="cohorts"
-    )
+    rows, line_numbers = _read_rows(source, required_columns=_COHORT_COLUMNS, label="cohorts")
     known_ids: set[str] | None = None
     if programs is not None:
         known_ids = {program.id for program in programs}
@@ -230,9 +227,7 @@ def load_cohorts(
                 f"cohorts row {row}: program_ids must list at least one program id"
             )
         if len(set(members)) != len(members):
-            raise CsvLoaderError(
-                f"cohorts row {row}: program_ids contains duplicate entries"
-            )
+            raise CsvLoaderError(f"cohorts row {row}: program_ids contains duplicate entries")
         for member in members:
             if known_ids is not None and member not in known_ids:
                 raise CsvLoaderError(
@@ -269,8 +264,7 @@ def load_cohorts(
                 "which exceeds the whole budget (1.0)"
             )
         cohorts.append(
-            Cohort(id=cohort_id, program_ids=members, min_share=min_share,
-                   max_share=max_share)
+            Cohort(id=cohort_id, program_ids=members, min_share=min_share, max_share=max_share)
         )
     return cohorts
 
@@ -283,9 +277,7 @@ def load_region_floors(source: str | Path | TextIO) -> list[RegionFloor]:
     with different floors are rejected. Floor values may not sum over
     ``1.0``.
     """
-    rows, line_numbers = _read_rows(
-        source, required_columns=_FLOOR_COLUMNS, label="constraints"
-    )
+    rows, line_numbers = _read_rows(source, required_columns=_FLOOR_COLUMNS, label="constraints")
     floors: dict[str, float] = {}
     total = 0.0
     for record, row in zip(rows, line_numbers):
@@ -322,9 +314,7 @@ def load_allocation_inputs(
     them.
     """
     program_list = load_programs(programs)
-    cohort_list = (
-        load_cohorts(cohorts, programs=program_list) if cohorts is not None else []
-    )
+    cohort_list = load_cohorts(cohorts, programs=program_list) if cohorts is not None else []
     floors = load_region_floors(constraints) if constraints is not None else []
     return AllocationInputs(
         programs=tuple(program_list),
