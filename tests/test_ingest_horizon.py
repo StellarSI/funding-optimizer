@@ -7,7 +7,8 @@ mapping behavior are all deterministic under the injected clock/sleep.
 
 from __future__ import annotations
 
-from typing import Any
+from collections.abc import Mapping
+from typing import Any, cast
 
 import pytest
 
@@ -57,7 +58,7 @@ class FakeSession:
         self,
         url: str,
         *,
-        headers: dict[str, str],
+        headers: Mapping[str, str],
         timeout: float,
     ) -> FakeResponse:
         self.requests.append((url, dict(headers), timeout))
@@ -66,7 +67,7 @@ class FakeSession:
         step = self._script.pop(0)
         if isinstance(step, Exception):
             raise step
-        return step
+        return cast(FakeResponse, step)
 
 
 class FakeClock:
@@ -135,7 +136,7 @@ def _client(
 def test_parse_payment_record_native_asset() -> None:
     payment = parse_payment_record(_payment_record(), index=0)
 
-    assert payment == HorizonPayment(
+    expected = HorizonPayment(
         id="123",
         paging_token="123",
         transaction_hash="deadbeef",
@@ -145,8 +146,10 @@ def test_parse_payment_record_native_asset() -> None:
         from_account="GSENDER",
         to_account="GRECIPIENT",
         asset="XLM",
-        amount=pytest.approx(12.5),
+        amount=12.5,
     )
+    assert payment == expected
+    assert payment.amount == pytest.approx(12.5)
 
 
 def test_parse_payment_record_issued_asset() -> None:
