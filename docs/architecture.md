@@ -27,8 +27,18 @@ budgets, cohorts, constraints     (Horizon / transaction-analytics-api)
 
 The pipeline has three stages:
 
-1. **Ingestion** — program budgets, cohorts, expected reach, region floors,
-   and constraints are read from CSV, JSON, or the analytics API.
+1. **Ingestion** - program budgets, cohorts, expected reach, region floors,
+   and constraints are read from CSV, JSON, or the analytics API. Reading
+   from disk or the network lives under `funding_optimizer/ingest/`:
+   `csv_loader.py` parses strict, row-numbered CSV exports of programs
+   (`load_programs`), cohorts (`load_cohorts`), and regional fairness floors
+   (`load_region_floors`), or bundles them with `load_allocation_inputs`.
+   `horizon.py` reads on-chain delivery data from a Stellar Horizon endpoint
+   with explicit timeouts, retries with backoff (429/5xx and transport
+   failures, honoring `Retry-After`), a requests-per-second rate limit, and
+   typed parsing of payment-like records into `HorizonPayment`. Malformed
+   records and envelopes fail loudly with named errors instead of feeding the
+   optimizer bad data.
 2. **Optimization** — the deterministic allocator distributes each budget
    tranche across programs subject to regional floors, program minimum and
    maximum shares, and per-asset constraints. Budgets disbursed over time
