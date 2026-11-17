@@ -826,6 +826,71 @@ objectives), so malformed plans fail loudly at the boundary.
 - `Program.expected_reach` must be a non-negative integer.
 - `Program.region`, when provided, must be a non-empty string.
 
+## Ingesting inputs
+
+The optimizer consumes two typed input sources, both under
+`funding_optimizer/ingest/`. Neither signs nor submits payouts; they only
+feed the allocator and the analytics pipeline.
+
+### Programs, cohorts and constraints from CSV
+
+`funding_optimizer/ingest/csv_loader.py` (issue #31) reads the
+operator-maintained CSV exports into the typed structures the optimizer
+consumes. Parsing is strict and deterministic: files must be UTF-8, the
+header row is required (matched case-insensitively; unknown columns are
+ignored), and every error names the offending row and field.
+
+```python
+from funding_optimizer.ingest import (
+    load_allocation_inputs,
+    load_cohorts,
+    load_programs,
+    load_region_floors,
+)
+
+programs = load_programs("programs.csv")          # id, region, expected_reach, min_share?
+cohorts = load_cohorts("cohorts.csv", programs=programs)  # id, program_ids (';'-separated), min_share?, max_share?
+floors = load_region_floors("constraints.csv")    # region, floor
+
+bundle = load_allocation_inputs("programs.csv", cohorts="cohorts.csv", constraints="constraints.csv")
+print(bundle.programs, bundle.cohorts, bundle.region_floors)
+```
+
+Validation happens at the boundary: duplicate ids, out-of-range shares,
+cohort member references to unknown programs, programs assigned to multiple
+cohorts, cohort or floor shares summing over 100%, and malformed numbers are
+all rejected with a row-numbered `CsvLoaderError`.
+
+### On-chain delivery data from Horizon
+
+`funding_optimizer/ingest/horizon.py` (issue #32) reads a Stellar Horizon
+endpoint with explicit timeouts, retries with exponential backoff (429/5xx
+and transport failures, honoring `Retry-After` up to `max_retry_after`
+seconds), and a minimum spacing between requests derived from `rate_limit`
+(requests per second, default 5). Retries are deterministic - there is no
+randomized jitter - and `sleep`/`clock` can be injected for tests. Payment-
+like records are parsed into typed `HorizonPayment` values; malformed
+records raise `HorizonRecordError` naming the record index, and a malformed
+response envelope raises `HorizonEnvelopeError`.
+
+```python
+from funding_optimizer.ingest import HorizonClient
+
+client = HorizonClient("https://horizon-testnet.stellar.org", rate_limit=5.0)
+page = client.get_page("/accounts/G.../payments", params={"limit": 200})
+
+for payment in client.iter_payments("G...", max_records=500):
+    print(payment.asset, payment.amount, payment.to_account)
+```
+
+`HORIZON_URL` (see [Configuration](#configuration)) is used as the default
+base URL when `base_url` is not passed. Pagination follows `next` links
+automatically when using `iter_records`/`iter_payments`, and
+`max_records` bounds how many records are read. Errors map onto a small
+taxonomy: `HorizonClientError` (non-retryable 4xx), `HorizonRateLimitError`
+(429 past the retry budget), `HorizonServerError` (5xx past the retry
+budget), and `HorizonTransportError` (unreachable endpoint past the budget).
+
 ## Configuration
 
 | Variable | Description |
