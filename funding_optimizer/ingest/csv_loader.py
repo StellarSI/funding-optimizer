@@ -52,6 +52,15 @@ class AllocationInputs:
     region_floors: tuple[RegionFloor, ...]
 
 
+def _read_raw(handle: TextIO, *, label: str) -> list[list[str]]:
+    try:
+        return list(csv.reader(handle))
+    except UnicodeDecodeError as exc:
+        raise CsvLoaderError(f"{label}: file is not valid UTF-8: {exc}") from exc
+    except csv.Error as exc:
+        raise CsvLoaderError(f"{label}: malformed CSV: {exc}") from exc
+
+
 def _read_rows(
     source: str | Path | TextIO,
     *,
@@ -63,26 +72,14 @@ def _read_rows(
     Returns the rows (with normalized header keys) and the 1-based line
     numbers they came from so validation errors can point at the file.
     """
-    close = False
     if isinstance(source, (str, Path)):
         try:
-            handle: TextIO = open(source, newline="", encoding="utf-8-sig")
+            with open(source, newline="", encoding="utf-8-sig") as handle:
+                raw_rows = _read_raw(handle, label=label)
         except OSError as exc:
             raise CsvLoaderError(f"{label}: cannot open {source!s}: {exc}") from exc
-        close = True
     else:
-        handle = source
-
-    try:
-        try:
-            raw_rows = list(csv.reader(handle))
-        except UnicodeDecodeError as exc:
-            raise CsvLoaderError(f"{label}: file is not valid UTF-8: {exc}") from exc
-        except csv.Error as exc:
-            raise CsvLoaderError(f"{label}: malformed CSV: {exc}") from exc
-    finally:
-        if close:
-            handle.close()
+        raw_rows = _read_raw(source, label=label)
 
     if not raw_rows:
         raise CsvLoaderError(f"{label}: file is empty; a header row is required")

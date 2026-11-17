@@ -39,10 +39,6 @@ from funding_optimizer.ingest.horizon import (
 __all__ = [
     "AllocationInputs",
     "CsvLoaderError",
-    "load_allocation_inputs",
-    "load_cohorts",
-    "load_programs",
-    "load_region_floors",
     "HorizonClient",
     "HorizonClientError",
     "HorizonEnvelopeError",
@@ -53,5 +49,9 @@ __all__ = [
     "HorizonRecordError",
     "HorizonServerError",
     "HorizonTransportError",
+    "load_allocation_inputs",
+    "load_cohorts",
+    "load_programs",
+    "load_region_floors",
     "parse_payment_record",
 ]

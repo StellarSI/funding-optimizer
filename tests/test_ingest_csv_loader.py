@@ -20,7 +20,6 @@ from funding_optimizer.ingest.csv_loader import (
     load_programs,
     load_region_floors,
 )
-from funding_optimizer.optimizer.constraints import Program
 
 PROGRAMS_CSV = "id,region,expected_reach,min_share\n\
 p1,Africa,12000,0.20\n\

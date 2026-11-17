@@ -169,7 +169,7 @@ class _UrllibSession:
             try:
                 body = exc.read()
             except Exception:  # noqa: BLE001 - best effort, never mask the HTTP status
-                pass
+                body = b""
             return _UrllibResponse(
                 status_code=exc.code,
                 headers={k.lower(): v for k, v in (exc.headers or {}).items()},
