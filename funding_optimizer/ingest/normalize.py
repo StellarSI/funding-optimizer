@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from math import isfinite
 from typing import Any
@@ -150,9 +150,7 @@ def _optional_amount(
     return _amount({key: value}, (key,), index=index, source=source)
 
 
-def _occurred_at(
-    record: Mapping[str, Any], *, index: int, source: EventSource
-) -> str:
+def _occurred_at(record: Mapping[str, Any], *, index: int, source: EventSource) -> str:
     raw = _text(
         record,
         ("occurred_at", "created_at", "timestamp", "start"),
@@ -165,14 +163,14 @@ def _occurred_at(
             "(expected occurred_at, created_at, timestamp or start)"
         )
     try:
-        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        parsed = datetime.fromisoformat(raw)
     except ValueError:
         raise NormalizationError(
             f"{source.value} record {index}: invalid timestamp {raw!r}"
         ) from None
     if parsed.tzinfo is None:
-        parsed = parsed.replace(tzinfo=timezone.utc)
-    return parsed.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+        parsed = parsed.replace(tzinfo=UTC)
+    return parsed.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def _asset(record: Mapping[str, Any], *, index: int, source: EventSource) -> str:
@@ -250,9 +248,7 @@ def normalize_horizon_record(
     if subject is not None and subject == counterparty and subject != account:
         account, counterparty = counterparty, account
 
-    occurred_at = _occurred_at(
-        {"created_at": payment.created_at}, index=index, source=source
-    )
+    occurred_at = _occurred_at({"created_at": payment.created_at}, index=index, source=source)
     metadata = {
         "transaction_hash": payment.transaction_hash,
         "paging_token": payment.paging_token,
@@ -282,18 +278,12 @@ def normalize_analytics_record(
     source = EventSource.ANALYTICS
     mapping = _require_mapping(record, index=index, source=source)
 
-    account = (
-        _text(mapping, ("account", "to", "destination"), index=index, source=source) or ""
-    )
+    account = _text(mapping, ("account", "to", "destination"), index=index, source=source) or ""
     counterparty = _text(
         mapping, ("from", "counterparty", "source_account"), index=index, source=source
     )
-    inflow = _optional_amount(
-        mapping.get("inflow"), "inflow", index=index, source=source
-    )
-    outflow = _optional_amount(
-        mapping.get("outflow"), "outflow", index=index, source=source
-    )
+    inflow = _optional_amount(mapping.get("inflow"), "inflow", index=index, source=source)
+    outflow = _optional_amount(mapping.get("outflow"), "outflow", index=index, source=source)
     amount = (
         _amount(mapping, ("amount", "volume"), index=index, source=source)
         if inflow is None and outflow is None
@@ -304,9 +294,7 @@ def normalize_analytics_record(
     occurred_at = _occurred_at(mapping, index=index, source=source)
     raw_id = _text(mapping, ("id", "bucket_id", "event_id"), index=index, source=source)
     event_id = f"analytics:{raw_id}" if raw_id is not None else f"analytics:{index}:{occurred_at}"
-    event_type = (
-        _text(mapping, ("type", "event_type"), index=index, source=source) or "flow"
-    )
+    event_type = _text(mapping, ("type", "event_type"), index=index, source=source) or "flow"
 
     return NormalizedEvent(
         event_id=event_id,

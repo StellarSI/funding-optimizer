@@ -288,9 +288,7 @@ def parse_asset_flow(payload: Any) -> AssetFlow:
     buckets = payload.get("buckets")
     if not isinstance(buckets, list):
         raise AnalyticsRecordError("asset flow response is missing a 'buckets' list")
-    parsed = tuple(
-        parse_flow_bucket(bucket, index=index) for index, bucket in enumerate(buckets)
-    )
+    parsed = tuple(parse_flow_bucket(bucket, index=index) for index, bucket in enumerate(buckets))
     return AssetFlow(asset=asset, interval=interval, buckets=parsed)
 
 
@@ -347,11 +345,7 @@ class AnalyticsApiClient:
         sleep: Callable[[float], None] | None = None,
         clock: Callable[[], float] | None = None,
     ) -> None:
-        resolved = (
-            base_url
-            if base_url is not None
-            else os.environ.get("ANALYTICS_API_URL", "")
-        )
+        resolved = base_url if base_url is not None else os.environ.get("ANALYTICS_API_URL", "")
         self.base_url = _validate_base_url(resolved)
 
         key = api_key if api_key is not None else os.environ.get("ANALYTICS_API_KEY", "")
@@ -378,9 +372,7 @@ class AnalyticsApiClient:
         self.backoff_factor = float(backoff_factor)
 
         if not isinstance(max_retry_after, (int, float)) or isinstance(max_retry_after, bool):
-            raise AnalyticsApiError(
-                f"max_retry_after must be a number, got {max_retry_after!r}"
-            )
+            raise AnalyticsApiError(f"max_retry_after must be a number, got {max_retry_after!r}")
         if not isfinite(float(max_retry_after)) or float(max_retry_after) < 0.0:
             raise AnalyticsApiError(
                 f"max_retry_after must be a non-negative, finite number, got {max_retry_after!r}"

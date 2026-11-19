@@ -239,11 +239,13 @@ def test_bearer_key_is_only_sent_when_configured() -> None:
 
 def test_retries_rate_limits_then_succeeds() -> None:
     clock = FakeClock()
-    session = FakeSession([
-        FakeResponse(429, headers={"Retry-After": "2"}),
-        FakeResponse(429),
-        FakeResponse(200, {"status": "ok"}),
-    ])
+    session = FakeSession(
+        [
+            FakeResponse(429, headers={"Retry-After": "2"}),
+            FakeResponse(429),
+            FakeResponse(200, {"status": "ok"}),
+        ]
+    )
     client = _client(session, clock=clock, backoff_factor=0.5)
 
     assert client.get_health() == {"status": "ok"}
@@ -253,11 +255,13 @@ def test_retries_rate_limits_then_succeeds() -> None:
 
 def test_retries_server_errors_with_exponential_backoff() -> None:
     clock = FakeClock()
-    session = FakeSession([
-        FakeResponse(500),
-        FakeResponse(503),
-        FakeResponse(200, {"status": "ok"}),
-    ])
+    session = FakeSession(
+        [
+            FakeResponse(500),
+            FakeResponse(503),
+            FakeResponse(200, {"status": "ok"}),
+        ]
+    )
     client = _client(session, clock=clock, backoff_factor=0.5)
     client.get_health()
     assert clock.sleeps == [0.5, 1.0]
@@ -265,10 +269,12 @@ def test_retries_server_errors_with_exponential_backoff() -> None:
 
 def test_retry_after_is_capped() -> None:
     clock = FakeClock()
-    session = FakeSession([
-        FakeResponse(429, headers={"Retry-After": "999"}),
-        FakeResponse(200, {"status": "ok"}),
-    ])
+    session = FakeSession(
+        [
+            FakeResponse(429, headers={"Retry-After": "999"}),
+            FakeResponse(200, {"status": "ok"}),
+        ]
+    )
     client = AnalyticsApiClient(
         BASE_URL,
         timeout=10.0,
@@ -323,10 +329,12 @@ def test_non_json_body_raises_envelope_error() -> None:
 
 
 def test_url_defaults_to_v1_and_keeps_absolute_next_links() -> None:
-    session = FakeSession([
-        _page([_asset_flow_body()], next_url=f"{BASE_URL}/v1/flows/assets?page=2"),
-        _page([]),
-    ])
+    session = FakeSession(
+        [
+            _page([_asset_flow_body()], next_url=f"{BASE_URL}/v1/flows/assets?page=2"),
+            _page([]),
+        ]
+    )
     client = _client(session)
     records = list(client.iter_records("/flows/assets"))
     assert len(records) == 1
@@ -335,9 +343,11 @@ def test_url_defaults_to_v1_and_keeps_absolute_next_links() -> None:
 
 
 def test_max_records_stops_before_fetching_more_pages() -> None:
-    session = FakeSession([
-        _page([_asset_flow_body()], next_url=f"{BASE_URL}/v1/flows/assets?page=2"),
-    ])
+    session = FakeSession(
+        [
+            _page([_asset_flow_body()], next_url=f"{BASE_URL}/v1/flows/assets?page=2"),
+        ]
+    )
     client = _client(session)
     records = list(client.iter_records("/flows/assets", max_records=1))
     assert len(records) == 1
@@ -351,11 +361,13 @@ def test_max_records_must_be_positive_integer() -> None:
 
 
 def test_get_asset_flow_and_account_flow() -> None:
-    session = FakeSession([
-        FakeResponse(200, _asset_flow_body()),
-        FakeResponse(200, _account_flow_body()),
-        FakeResponse(200, {"status": "ok", "lag_seconds": 5}),
-    ])
+    session = FakeSession(
+        [
+            FakeResponse(200, _asset_flow_body()),
+            FakeResponse(200, _account_flow_body()),
+            FakeResponse(200, {"status": "ok", "lag_seconds": 5}),
+        ]
+    )
     client = _client(session)
     flow = client.get_asset_flow("usdc:G" + "A" * 55, params={"interval": "1h"})
     assert flow.buckets[0].payments == 12

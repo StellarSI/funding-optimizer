@@ -112,7 +112,7 @@ def test_normalize_horizon_record_malformed_names_index() -> None:
 
 def test_normalize_horizon_record_rejects_non_mapping() -> None:
     with pytest.raises(NormalizationError, match="expected an object"):
-        normalize_horizon_record(["not", "a", "record"])
+        normalize_horizon_record(cast(Any, ["not", "a", "record"]))
 
 
 # --------------------------------------------------------------------- #
@@ -134,9 +134,7 @@ def test_normalize_analytics_record_happy_path() -> None:
 
 
 def test_normalize_analytics_record_outflow_direction() -> None:
-    event = normalize_analytics_record(
-        _analytics_record(inflow="10", outflow="40", amount="40")
-    )
+    event = normalize_analytics_record(_analytics_record(inflow="10", outflow="40", amount="40"))
     assert event.direction is EventDirection.OUT
     assert event.amount == pytest.approx(40.0)
 
