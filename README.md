@@ -891,6 +891,57 @@ taxonomy: `HorizonClientError` (non-retryable 4xx), `HorizonRateLimitError`
 (429 past the retry budget), `HorizonServerError` (5xx past the retry
 budget), and `HorizonTransportError` (unreachable endpoint past the budget).
 
+### Flow analytics from transaction-analytics-api
+
+`funding_optimizer/ingest/analytics_api.py` (issue #33) reads flow summaries
+from a `transaction-analytics-api` endpoint. Like the Horizon client it uses
+explicit timeouts, deterministic retries with exponential backoff (honoring
+`Retry-After` up to `max_retry_after`), and pagination via `iter_records` /
+`iter_asset_flows` with `max_records`. Responses are parsed into typed
+`AssetFlow`, `AccountFlow`, and `FlowBucket` values; malformed records raise
+an indexed `AnalyticsRecordError` and bad envelopes raise
+`AnalyticsEnvelopeError`.
+
+```python
+from funding_optimizer.ingest import AnalyticsApiClient
+
+client = AnalyticsApiClient("https://analytics-testnet.stellar.org")
+flow = client.get_asset_flow("USDC:G...", params={"interval": "1h"})
+print(flow.asset, flow.interval)
+
+for bucket in flow.buckets:
+    print(bucket.start, bucket.volume, bucket.payments, bucket.net_flow)
+```
+
+`ANALYTICS_API_URL` is the default base URL; `ANALYTICS_API_KEY` (or the
+`api_key` argument) supplies an optional bearer token, sent only when set.
+The client only reads analytics data — it never signs or submits payouts.
+
+### One event model for both ingestion paths
+
+`funding_optimizer/ingest/normalize.py` (issue #34) maps Horizon payment
+records and analytics flow records onto the same frozen `NormalizedEvent`,
+so downstream features do not need to know which upstream produced a value
+movement. Timestamps become canonical UTC (`...Z`), assets are validated
+`XLM` / `CODE:ISSUER` identifiers, and `direction` is `in`, `out`, or
+`unknown` relative to an optional `subject` account.
+
+```python
+from funding_optimizer.ingest import (
+    EventSource,
+    normalize_analytics_records,
+    normalize_horizon_records,
+)
+
+horizon_events = normalize_horizon_records(horizon_payments, subject="G...")
+flow_events = normalize_analytics_records(flow_records, subject="G...")
+assert {event.source for event in horizon_events} == {EventSource.HORIZON}
+assert {event.source for event in flow_events} == {EventSource.ANALYTICS}
+```
+
+Malformed records fail deterministically with a `NormalizationError` naming
+the record index and field, so a bad upstream row never silently disappears.
+
 ## Configuration
 
 | Variable | Description |
