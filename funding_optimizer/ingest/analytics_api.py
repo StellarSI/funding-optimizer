@@ -571,6 +571,8 @@ class AnalyticsApiClient:
                     return
                 yield record
                 seen += 1
+            if max_records is not None and seen >= max_records:
+                return
             url = page.next_url
 
     def get_asset_flow(
