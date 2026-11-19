@@ -250,7 +250,7 @@ def test_retries_rate_limits_then_succeeds() -> None:
 
     assert client.get_health() == {"status": "ok"}
     assert len(session.requests) == 3
-    assert clock.sleeps == [2.0, 0.5]  # Retry-After, then 0.5 * 2**0
+    assert clock.sleeps == [2.0, 1.0]  # Retry-After, then 0.5 * 2**1
 
 
 def test_retries_server_errors_with_exponential_backoff() -> None:
@@ -386,7 +386,8 @@ def test_iter_asset_flows_parses_each_page_record() -> None:
 
 
 def test_malformed_record_in_envelope_is_rejected() -> None:
-    session = FakeSession([_page([{"asset": "XLM"}]), _page([{"asset": "XLM"}])])
+    invalid = {"asset": "XLM", "interval": "1h"}
+    session = FakeSession([_page([invalid]), _page([invalid])])
     client = _client(session)
     with pytest.raises(AnalyticsRecordError, match="buckets"):
         list(client.iter_asset_flows("XLM"))

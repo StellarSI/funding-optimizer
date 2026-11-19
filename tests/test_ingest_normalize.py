@@ -170,7 +170,9 @@ def test_normalize_analytics_record_canonicalizes_naive_timestamp() -> None:
 
 def test_normalize_analytics_record_malformed_fields() -> None:
     with pytest.raises(NormalizationError, match="amount"):
-        normalize_analytics_record(_analytics_record(amount="bad"), index=1)
+        normalize_analytics_record(
+            _analytics_record(amount="bad", inflow=None, outflow=None), index=1
+        )
     with pytest.raises(NormalizationError, match="timestamp"):
         normalize_analytics_record(_analytics_record(timestamp="later"), index=2)
     with pytest.raises(NormalizationError, match="record 3"):
@@ -205,7 +207,10 @@ def test_normalize_records_preserves_order_and_indexes_errors() -> None:
 
     with pytest.raises(NormalizationError, match="record 1"):
         normalize_records(
-            [_analytics_record(), _analytics_record(amount="bad")],
+            [
+                _analytics_record(),
+                _analytics_record(amount="bad", inflow=None, outflow=None),
+            ],
             source=EventSource.ANALYTICS,
         )
 
