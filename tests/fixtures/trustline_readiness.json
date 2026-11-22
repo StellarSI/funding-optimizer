@@ -1,0 +1,38 @@
+﻿[
+  {
+    "event_id": "horizon:tx1:1",
+    "source": "horizon",
+    "occurred_at": "2026-01-01T00:00:00Z",
+    "event_type": "change_trust",
+    "asset": "USDC:GISSUER",
+    "amount": 0.0,
+    "direction": "unknown",
+    "account": "GRECIPIENT1",
+    "counterparty": null,
+    "metadata": {}
+  },
+  {
+    "event_id": "horizon:tx2:2",
+    "source": "horizon",
+    "occurred_at": "2026-01-01T01:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC:GISSUER",
+    "amount": 10.0,
+    "direction": "in",
+    "account": "GRECIPIENT2",
+    "counterparty": "GFUND",
+    "metadata": {}
+  },
+  {
+    "event_id": "horizon:tx3:3",
+    "source": "horizon",
+    "occurred_at": "2026-01-02T00:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC:GISSUER",
+    "amount": 5.0,
+    "direction": "out",
+    "account": "GRECIPIENT3",
+    "counterparty": "GOTHER",
+    "metadata": {}
+  }
+]
