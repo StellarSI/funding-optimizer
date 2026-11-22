@@ -66,13 +66,15 @@ class TrustlineReadinessReport:
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "observation_window": None
-            if self.observation_window is None
-            else {
-                "start": self.observation_window.start.isoformat().replace("+00:00", "Z"),
-                "end": self.observation_window.end.isoformat().replace("+00:00", "Z"),
-                "unit": "utc-iso8601",
-            },
+            "observation_window": (
+                None
+                if self.observation_window is None
+                else {
+                    "start": self.observation_window.start.isoformat().replace("+00:00", "Z"),
+                    "end": self.observation_window.end.isoformat().replace("+00:00", "Z"),
+                    "unit": "utc-iso8601",
+                }
+            ),
             "units": {"readiness_rate": "fraction", "accounts": "count"},
             "asset": self.asset,
             "cohorts": [
@@ -94,7 +96,9 @@ def _as_utc(value: datetime | str, name: str) -> datetime:
         try:
             parsed = datetime.fromisoformat(value)
         except ValueError as exc:
-            raise TrustlineReadinessError(f"{name} must be an ISO-8601 datetime, got {value!r}") from exc
+            raise TrustlineReadinessError(
+                f"{name} must be an ISO-8601 datetime, got {value!r}"
+            ) from exc
     elif isinstance(value, datetime):
         parsed = value
     else:
@@ -123,7 +127,12 @@ def _coerce_events(events: Iterable[NormalizedEvent]) -> list[NormalizedEvent]:
     return result
 
 
-_TRUSTLINE_EVENT_TYPES = {"change_trust", "trustline_created", "trustline_ready", "create_trustline"}
+_TRUSTLINE_EVENT_TYPES = {
+    "change_trust",
+    "trustline_created",
+    "trustline_ready",
+    "create_trustline",
+}
 
 
 def _is_trustline_ready(event: NormalizedEvent, account: str, asset: str) -> bool:
@@ -176,7 +185,9 @@ def compute_trustline_readiness_rates(
         )
 
     window_events = [
-        e for e in normalized if observation_window is None or observation_window.contains(_event_time(e))
+        e
+        for e in normalized
+        if observation_window is None or observation_window.contains(_event_time(e))
     ]
 
     cohort_results: list[CohortReadiness] = []
@@ -225,4 +236,3 @@ def compute_trustline_readiness_rates(
         asset=asset,
         cohorts=tuple(cohort_results),
     )
-
