@@ -1,0 +1,62 @@
+[
+  {
+    "event_id": "horizon:d1:1",
+    "source": "horizon",
+    "occurred_at": "2026-01-01T00:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC:GISSUER",
+    "amount": 100.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GRECIPIENT1",
+    "metadata": {}
+  },
+  {
+    "event_id": "horizon:r1:2",
+    "source": "horizon",
+    "occurred_at": "2026-01-01T01:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC:GISSUER",
+    "amount": 100.0,
+    "direction": "in",
+    "account": "GRECIPIENT1",
+    "counterparty": "GFUND",
+    "metadata": {}
+  },
+  {
+    "event_id": "horizon:d2:3",
+    "source": "horizon",
+    "occurred_at": "2026-01-02T00:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC:GISSUER",
+    "amount": 50.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GRECIPIENT2",
+    "metadata": {}
+  },
+  {
+    "event_id": "horizon:r2:4",
+    "source": "horizon",
+    "occurred_at": "2026-01-02T04:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC:GISSUER",
+    "amount": 50.0,
+    "direction": "in",
+    "account": "GRECIPIENT2",
+    "counterparty": "GFUND",
+    "metadata": {}
+  },
+  {
+    "event_id": "horizon:d3:5",
+    "source": "horizon",
+    "occurred_at": "2026-01-03T00:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC:GISSUER",
+    "amount": 25.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GRECIPIENT3",
+    "metadata": {}
+  }
+]
