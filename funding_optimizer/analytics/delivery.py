@@ -88,13 +88,15 @@ class TimeToReceiptMetrics:
 
     def as_dict(self) -> dict[str, object]:
         return {
-            "observation_window": None
-            if self.observation_window is None
-            else {
-                "start": self.observation_window.start.isoformat().replace("+00:00", "Z"),
-                "end": self.observation_window.end.isoformat().replace("+00:00", "Z"),
-                "unit": "utc-iso8601",
-            },
+            "observation_window": (
+                None
+                if self.observation_window is None
+                else {
+                    "start": self.observation_window.start.isoformat().replace("+00:00", "Z"),
+                    "end": self.observation_window.end.isoformat().replace("+00:00", "Z"),
+                    "unit": "utc-iso8601",
+                }
+            ),
             "units": {"receipt_duration": "seconds"},
             "disbursements": self.disbursements,
             "matched_receipts": self.matched_receipts,
@@ -127,7 +129,9 @@ def _as_utc(value: datetime | str, name: str) -> datetime:
         try:
             parsed = datetime.fromisoformat(value)
         except ValueError as exc:
-            raise DeliveryAnalyticsError(f"{name} must be an ISO-8601 datetime, got {value!r}") from exc
+            raise DeliveryAnalyticsError(
+                f"{name} must be an ISO-8601 datetime, got {value!r}"
+            ) from exc
     elif isinstance(value, datetime):
         parsed = value
     else:
@@ -202,7 +206,9 @@ def compute_time_to_receipt_metrics(
 
     subject = disbursement_account.strip() if isinstance(disbursement_account, str) else None
     if disbursement_account is not None and not subject:
-        raise DeliveryAnalyticsError("disbursement_account must be a non-empty string when provided")
+        raise DeliveryAnalyticsError(
+            "disbursement_account must be a non-empty string when provided"
+        )
 
     ordered = sorted(normalized, key=lambda e: (_event_time(e), e.event_id))
     disbursements = [
@@ -276,4 +282,3 @@ def compute_time_to_receipt_metrics(
         max_receipt_seconds=max(durations) if durations else None,
         matches=tuple(matches),
     )
-
