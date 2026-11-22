@@ -92,7 +92,7 @@ class TrustlineReadinessReport:
 def _as_utc(value: datetime | str, name: str) -> datetime:
     if isinstance(value, str):
         try:
-            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            parsed = datetime.fromisoformat(value)
         except ValueError as exc:
             raise TrustlineReadinessError(f"{name} must be an ISO-8601 datetime, got {value!r}") from exc
     elif isinstance(value, datetime):
@@ -135,9 +135,7 @@ def _is_trustline_ready(event: NormalizedEvent, account: str, asset: str) -> boo
     if et in _TRUSTLINE_EVENT_TYPES or "trustline" in et or "change_trust" in et:
         return True
     # Receiving a non-native asset implies the trustline exists for that account.
-    if event.direction.value == "in" and asset.upper() != "XLM":
-        return True
-    return False
+    return bool(event.direction.value == "in" and asset.upper() != "XLM")
 
 
 def compute_trustline_readiness_rates(
@@ -227,3 +225,4 @@ def compute_trustline_readiness_rates(
         asset=asset,
         cohorts=tuple(cohort_results),
     )
+
