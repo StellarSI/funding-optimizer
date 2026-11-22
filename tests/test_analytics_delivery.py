@@ -15,7 +15,6 @@ from funding_optimizer.analytics.delivery import (
 )
 from funding_optimizer.ingest.normalize import EventDirection, EventSource, NormalizedEvent
 
-
 FIXTURE = Path(__file__).parent / "fixtures" / "delivery_time_to_receipt.json"
 
 

@@ -125,7 +125,7 @@ class TimeToReceiptMetrics:
 def _as_utc(value: datetime | str, name: str) -> datetime:
     if isinstance(value, str):
         try:
-            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+            parsed = datetime.fromisoformat(value)
         except ValueError as exc:
             raise DeliveryAnalyticsError(f"{name} must be an ISO-8601 datetime, got {value!r}") from exc
     elif isinstance(value, datetime):
@@ -276,3 +276,4 @@ def compute_time_to_receipt_metrics(
         max_receipt_seconds=max(durations) if durations else None,
         matches=tuple(matches),
     )
+
