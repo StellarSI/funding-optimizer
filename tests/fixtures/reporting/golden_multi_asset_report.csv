@@ -1,0 +1,7 @@
+program_id,region,asset,amount,share_of_asset,expected_reach
+edu-ke,Africa,USDC,80.0000000,0.800000,10.00
+health-gh,Africa,USDC,0.0000000,0.000000,6.00
+cash-ph,Asia,USDC,20.0000000,0.200000,8.00
+edu-ke,Africa,XLM,25.0000000,0.500000,10.00
+health-gh,Africa,XLM,0.0000000,0.000000,6.00
+cash-ph,Asia,XLM,25.0000000,0.500000,8.00

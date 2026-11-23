@@ -1,0 +1,75 @@
+{
+  "allocations": [
+    {
+      "amount": 80.0,
+      "asset": "USDC",
+      "expected_reach": 10.0,
+      "program_id": "edu-ke",
+      "region": "Africa",
+      "share_of_asset": 0.8
+    },
+    {
+      "amount": 0.0,
+      "asset": "USDC",
+      "expected_reach": 6.0,
+      "program_id": "health-gh",
+      "region": "Africa",
+      "share_of_asset": 0.0
+    },
+    {
+      "amount": 20.0,
+      "asset": "USDC",
+      "expected_reach": 8.0,
+      "program_id": "cash-ph",
+      "region": "Asia",
+      "share_of_asset": 0.2
+    },
+    {
+      "amount": 25.0,
+      "asset": "XLM",
+      "expected_reach": 10.0,
+      "program_id": "edu-ke",
+      "region": "Africa",
+      "share_of_asset": 0.5
+    },
+    {
+      "amount": 0.0,
+      "asset": "XLM",
+      "expected_reach": 6.0,
+      "program_id": "health-gh",
+      "region": "Africa",
+      "share_of_asset": 0.0
+    },
+    {
+      "amount": 25.0,
+      "asset": "XLM",
+      "expected_reach": 8.0,
+      "program_id": "cash-ph",
+      "region": "Asia",
+      "share_of_asset": 0.5
+    }
+  ],
+  "budget": {
+    "USDC": 100.0,
+    "XLM": 50.0
+  },
+  "generated_at": "2026-11-07T00:00:00Z",
+  "objective_value": -1410.0,
+  "regional_breakdown": {
+    "Africa": {
+      "USDC": 80.0,
+      "XLM": 25.0
+    },
+    "Asia": {
+      "USDC": 20.0,
+      "XLM": 25.0
+    }
+  },
+  "schema_version": "1.0.0",
+  "stellar_disbursement_metadata": {},
+  "success": true,
+  "total_allocated": {
+    "USDC": 100.0,
+    "XLM": 50.0
+  }
+}
