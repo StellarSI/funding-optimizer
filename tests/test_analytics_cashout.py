@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -79,8 +80,10 @@ def test_cashout_known_fixture() -> None:
     assert xlm.realization_rate == pytest.approx(1.0)
 
     serialized = report.as_dict()
-    assert serialized["units"]["realization_rate"] == "fraction"
-    assert serialized["assets"][0]["asset"] == "USDC:GISSUER"
+    units = cast(dict[str, str], serialized["units"])
+    assets = cast(list[dict[str, object]], serialized["assets"])
+    assert units["realization_rate"] == "fraction"
+    assert assets[0]["asset"] == "USDC:GISSUER"
 
 
 def test_window_filters_legs_and_mapping_form_is_accepted() -> None:

@@ -171,9 +171,7 @@ def compute_realized_cashout_rates(
 
     ordered = sorted(normalized, key=lambda event: (_event_time(event), event.event_id))
     in_window = [
-        event
-        for event in ordered
-        if window is None or window.contains(_event_time(event))
+        event for event in ordered if window is None or window.contains(_event_time(event))
     ]
 
     disbursements = [

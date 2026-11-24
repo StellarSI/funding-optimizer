@@ -214,9 +214,7 @@ def compute_unclaimed_funds(
     normalized = _coerce_events(events)
     subject = disbursement_account.strip() if isinstance(disbursement_account, str) else None
     if disbursement_account is not None and not subject:
-        raise UnclaimedFundsError(
-            "disbursement_account must be a non-empty string when provided"
-        )
+        raise UnclaimedFundsError("disbursement_account must be a non-empty string when provided")
     buckets = DEFAULT_AGING_BUCKETS if aging_buckets is None else _validate_buckets(aging_buckets)
 
     boundary = (
