@@ -262,6 +262,37 @@ only binding constraints move the objective when perturbed. Perturbations
 that become infeasible (for example floors summing over 100% of the budget)
 are reported with `success=False` and a diagnostic instead of raising.
 
+## Delivery analytics
+
+`funding_optimizer/analytics` measures what happened after funds were
+recommended. All metrics consume the normalized events from P34 and use
+inclusive UTC observation windows; amounts are in asset units and rates are
+fractions in `[0, 1]`. The optimizer only recommends allocations — it never
+signs or submits payouts.
+
+- `compute_time_to_receipt_metrics` (issue #36) pairs disbursements with
+  receipts and reports match rate plus receipt-time summaries in seconds.
+- `compute_trustline_readiness_rates` (issue #35) reports readiness by cohort.
+- `compute_unclaimed_funds` (issue #37) reports unclaimed balances with aging
+  buckets (`0-7`, `8-30`, `31-90`, `90+` days by default) and per-asset totals.
+- `compute_realized_cashout_rates` (issue #38) reports how much of each
+  disbursed amount was actually received, per asset and overall.
+
+```python
+from funding_optimizer.analytics import (
+    compute_realized_cashout_rates,
+    compute_unclaimed_funds,
+)
+
+unclaimed = compute_unclaimed_funds(events, disbursement_account="GFUND", as_of="2026-02-20T00:00:00Z")
+cashout = compute_realized_cashout_rates(events, disbursement_account="GFUND")
+print(unclaimed.total_amount, [b.bucket for b in unclaimed.buckets])
+print(cashout.realization_rate, cashout.recipient_cashout_rate)
+```
+
+Each metric returns a frozen result object with an `as_dict()` helper and is
+covered by a known-event fixture with hand-checkable values.
+
 ## Disbursement forecasting
 
 Forecasting lives under `funding_optimizer/forecasting`. It is built on the
