@@ -18,10 +18,12 @@ from .delivery import (
 )
 from .trustlines import (
     CohortReadiness,
-    ObservationWindow as TrustlineObservationWindow,
     TrustlineReadinessError,
     TrustlineReadinessReport,
     compute_trustline_readiness_rates,
+)
+from .trustlines import (
+    ObservationWindow as TrustlineObservationWindow,
 )
 from .unclaimed import (
     AgingBucketSummary,
