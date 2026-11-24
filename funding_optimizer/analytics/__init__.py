@@ -3,6 +3,12 @@
 The optimizer recommends allocations and never signs or submits payouts.
 """
 
+from .cashout import (
+    AssetCashoutRate,
+    CashoutAnalyticsError,
+    CashoutReport,
+    compute_realized_cashout_rates,
+)
 from .delivery import (
     DeliveryAnalyticsError,
     ObservationWindow,
@@ -12,18 +18,10 @@ from .delivery import (
 )
 from .trustlines import (
     CohortReadiness,
+    ObservationWindow as TrustlineObservationWindow,
     TrustlineReadinessError,
     TrustlineReadinessReport,
     compute_trustline_readiness_rates,
-)
-from .trustlines import (
-    ObservationWindow as TrustlineObservationWindow,
-)
-from .cashout import (
-    AssetCashoutRate,
-    CashoutAnalyticsError,
-    CashoutReport,
-    compute_realized_cashout_rates,
 )
 from .unclaimed import (
     AgingBucketSummary,
