@@ -1,0 +1,74 @@
+[
+  {
+    "event_id": "e1",
+    "source": "horizon",
+    "occurred_at": "2026-01-01T00:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC",
+    "amount": 100.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GA",
+    "metadata": { "program": "cash-ng", "region": "Africa", "cohort": "C1" }
+  },
+  {
+    "event_id": "e2",
+    "source": "horizon",
+    "occurred_at": "2026-01-01T01:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC",
+    "amount": 100.0,
+    "direction": "in",
+    "account": "GA",
+    "counterparty": "GFUND",
+    "metadata": { "program": "cash-ng", "region": "Africa", "cohort": "C1" }
+  },
+  {
+    "event_id": "e3",
+    "source": "horizon",
+    "occurred_at": "2026-01-02T00:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC",
+    "amount": 50.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GB",
+    "metadata": { "program": "cash-ng", "region": "Africa", "cohort": "C2" }
+  },
+  {
+    "event_id": "e4",
+    "source": "horizon",
+    "occurred_at": "2026-01-03T00:00:00Z",
+    "event_type": "payment",
+    "asset": "XLM",
+    "amount": 1000.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GC",
+    "metadata": { "program": "edu-ke", "region": "Africa", "cohort": "C1" }
+  },
+  {
+    "event_id": "e5",
+    "source": "horizon",
+    "occurred_at": "2026-01-03T00:30:00Z",
+    "event_type": "payment",
+    "asset": "XLM",
+    "amount": 1000.0,
+    "direction": "in",
+    "account": "GC",
+    "counterparty": "GFUND",
+    "metadata": { "program": "edu-ke", "region": "Africa", "cohort": "C1" }
+  },
+  {
+    "event_id": "e6",
+    "source": "horizon",
+    "occurred_at": "2026-02-01T00:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC",
+    "amount": 25.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GD",
+    "metadata": { "program": "edu-ke", "region": "Asia", "cohort": "C1" }
+  }
+]
