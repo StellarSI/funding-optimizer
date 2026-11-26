@@ -19,10 +19,10 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from itertools import pairwise
 from math import isfinite
 
 from funding_optimizer.analytics.delivery import (
-    DeliveryAnalyticsError,
     ObservationWindow,
     compute_time_to_receipt_metrics,
 )
@@ -217,7 +217,7 @@ def _histogram_labels(bounds: Sequence[float]) -> list[str]:
     labels = [f"0-{_format_bound(bounds[0])}"]
     labels.extend(
         f"{_format_bound(lower)}-{_format_bound(upper)}"
-        for lower, upper in zip(bounds, bounds[1:])
+        for lower, upper in pairwise(bounds)
     )
     labels.append(f"{_format_bound(bounds[-1])}+")
     return labels
