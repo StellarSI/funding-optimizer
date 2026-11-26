@@ -277,6 +277,10 @@ signs or submits payouts.
   buckets (`0-7`, `8-30`, `31-90`, `90+` days by default) and per-asset totals.
 - `compute_realized_cashout_rates` (issue #38) reports how much of each
   disbursed amount was actually received, per asset and overall.
+- `compute_delivery_aggregates` (issue #40) reports event, disbursement,
+  receipt, recipient and amount totals by program, region, cohort and asset,
+  with amounts kept separate per asset. The three grouping keys default to
+  `program`, `region` and `cohort` in event metadata and are configurable.
 
 ```python
 from funding_optimizer.analytics import (

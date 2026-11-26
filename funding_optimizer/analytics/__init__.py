@@ -3,6 +3,18 @@
 The optimizer recommends allocations and never signs or submits payouts.
 """
 
+from .aggregates import (
+    DEFAULT_COHORT_KEY,
+    DEFAULT_PROGRAM_KEY,
+    DEFAULT_REGION_KEY,
+    AggregateMetrics,
+    AggregateReport,
+    DeliveryAggregatesError,
+    compute_delivery_aggregates,
+)
+from .aggregates import (
+    ObservationWindow as AggregateObservationWindow,
+)
 from .cashout import (
     AssetCashoutRate,
     CashoutAnalyticsError,
@@ -34,11 +46,18 @@ from .unclaimed import (
 )
 
 __all__ = [
+    "AggregateMetrics",
+    "AggregateObservationWindow",
+    "AggregateReport",
     "AgingBucketSummary",
     "AssetCashoutRate",
     "CashoutAnalyticsError",
     "CashoutReport",
     "CohortReadiness",
+    "DEFAULT_COHORT_KEY",
+    "DEFAULT_PROGRAM_KEY",
+    "DEFAULT_REGION_KEY",
+    "DeliveryAggregatesError",
     "DeliveryAnalyticsError",
     "ObservationWindow",
     "ReceiptMatch",
@@ -49,6 +68,7 @@ __all__ = [
     "UnclaimedBalance",
     "UnclaimedFundsError",
     "UnclaimedFundsReport",
+    "compute_delivery_aggregates",
     "compute_realized_cashout_rates",
     "compute_time_to_receipt_metrics",
     "compute_trustline_readiness_rates",
