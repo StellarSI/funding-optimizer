@@ -29,9 +29,9 @@ from funding_optimizer.analytics.delivery import (
 from funding_optimizer.ingest.normalize import NormalizedEvent
 
 DEFAULT_DELAY_BUCKETS_SECONDS: tuple[float, ...] = (
-    3600.0,    # 1 hour
-    21600.0,   # 6 hours
-    86400.0,   # 1 day
+    3600.0,  # 1 hour
+    21600.0,  # 6 hours
+    86400.0,  # 1 day
     604800.0,  # 7 days
 )
 
@@ -135,9 +135,7 @@ def _as_utc(value: datetime | str, name: str) -> datetime:
         try:
             parsed = datetime.fromisoformat(value)
         except ValueError as exc:
-            raise DeliveryDelayError(
-                f"{name} must be an ISO-8601 datetime, got {value!r}"
-            ) from exc
+            raise DeliveryDelayError(f"{name} must be an ISO-8601 datetime, got {value!r}") from exc
     elif isinstance(value, datetime):
         parsed = value
     else:
@@ -184,9 +182,7 @@ def _resolve_buckets(buckets: Sequence[float]) -> tuple[float, ...]:
     previous = 0.0
     for bound in parsed:
         if not isfinite(bound) or bound <= previous:
-            raise DeliveryDelayError(
-                "bucket_bounds_seconds must be finite and strictly increasing"
-            )
+            raise DeliveryDelayError("bucket_bounds_seconds must be finite and strictly increasing")
         previous = bound
     return parsed
 
@@ -216,8 +212,7 @@ def _format_bound(seconds: float) -> str:
 def _histogram_labels(bounds: Sequence[float]) -> list[str]:
     labels = [f"0-{_format_bound(bounds[0])}"]
     labels.extend(
-        f"{_format_bound(lower)}-{_format_bound(upper)}"
-        for lower, upper in pairwise(bounds)
+        f"{_format_bound(lower)}-{_format_bound(upper)}" for lower, upper in pairwise(bounds)
     )
     labels.append(f"{_format_bound(bounds[-1])}+")
     return labels
@@ -321,7 +316,9 @@ def compute_delivery_delay_distributions(
 
     return DeliveryDelayReport(
         observation_window=window,
-        disbursement_account=disbursement_account.strip() if isinstance(disbursement_account, str) else None,
+        disbursement_account=(
+            disbursement_account.strip() if isinstance(disbursement_account, str) else None
+        ),
         bucket_bounds_seconds=bounds,
         groups=tuple(groups),
         matched_receipts=len(matches),

@@ -86,12 +86,8 @@ def test_missing_dimensions_are_reported_as_unknown() -> None:
     unknown = [group for group in report.groups if group.corridor == "unknown"]
     assert unknown == []  # every disbursement in the fixture is tagged
 
-    events = [
-        event for event in load_fixture() if event.event_id in {"d3", "r3"}
-    ]
-    stripped = [
-        NormalizedEvent(**{**event.__dict__, "metadata": {}}) for event in events
-    ]
+    events = [event for event in load_fixture() if event.event_id in {"d3", "r3"}]
+    stripped = [NormalizedEvent(**{**event.__dict__, "metadata": {}}) for event in events]
     report = compute_delivery_delay_distributions(stripped)
     assert len(report.groups) == 1
     assert report.groups[0].corridor == "unknown"
@@ -110,9 +106,7 @@ def test_invalid_inputs_raise() -> None:
     with pytest.raises(DeliveryDelayError):
         compute_delivery_delay_distributions("not-events")  # type: ignore[arg-type]
     with pytest.raises(DeliveryDelayError):
-        compute_delivery_delay_distributions(
-            load_fixture(), bucket_bounds_seconds=(3600.0, 3600.0)
-        )
+        compute_delivery_delay_distributions(load_fixture(), bucket_bounds_seconds=(3600.0, 3600.0))
     with pytest.raises(DeliveryDelayError):
         compute_delivery_delay_distributions(
             load_fixture(), observation_window={"start": "bad", "end": "2026-01-31T00:00:00Z"}
