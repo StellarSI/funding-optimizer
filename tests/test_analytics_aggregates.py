@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import cast
 
 import pytest
 
@@ -68,9 +69,12 @@ def test_delivery_aggregates_known_fixture() -> None:
     assert last.received_amount == pytest.approx(0.0)
 
     as_dict = report.as_dict()
-    assert as_dict["units"]["amount"] == "asset units"
-    assert as_dict["dimension_keys"]["program"] == "program"
-    assert as_dict["groups"][0]["first_event_at"].endswith("Z")
+    units = cast(dict[str, str], as_dict["units"])
+    dimension_keys = cast(dict[str, str], as_dict["dimension_keys"])
+    groups = cast(list[dict[str, object]], as_dict["groups"])
+    assert units["amount"] == "asset units"
+    assert dimension_keys["program"] == "program"
+    assert cast(str, groups[0]["first_event_at"]).endswith("Z")
 
 
 def test_observation_window_filters_all_events() -> None:

@@ -266,13 +266,13 @@ def compute_delivery_aggregates(
             continue
         if subject is not None and event.direction.value == "out" and event.account != subject:
             continue
-        key = (
+        group_key = (
             _dimension(event, keys["program"]),
             _dimension(event, keys["region"]),
             _dimension(event, keys["cohort"]),
             event.asset,
         )
-        accumulators.setdefault(key, _Accumulator()).add(event, moment)
+        accumulators.setdefault(group_key, _Accumulator()).add(event, moment)
 
     groups: list[AggregateMetrics] = []
     for (program, region, cohort, asset), acc in sorted(accumulators.items()):
