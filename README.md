@@ -277,6 +277,11 @@ signs or submits payouts.
   buckets (`0-7`, `8-30`, `31-90`, `90+` days by default) and per-asset totals.
 - `compute_realized_cashout_rates` (issue #38) reports how much of each
   disbursed amount was actually received, per asset and overall.
+- `compute_delivery_delay_distributions` (issue #39) summarizes matched
+  delivery delays in seconds by corridor and program, with percentiles, a
+  histogram and a per-asset breakdown. Corridor and program come from event
+  metadata (`corridor` and `program` by default; missing values read
+  `unknown`).
 
 ```python
 from funding_optimizer.analytics import (
