@@ -9,6 +9,17 @@ from .cashout import (
     CashoutReport,
     compute_realized_cashout_rates,
 )
+from .delays import (
+    DEFAULT_CORRIDOR_KEY,
+    DEFAULT_DELAY_BUCKETS_SECONDS,
+    DEFAULT_PROGRAM_KEY,
+    UNKNOWN_DIMENSION,
+    AssetDelaySummary,
+    DeliveryDelayDistribution,
+    DeliveryDelayError,
+    DeliveryDelayReport,
+    compute_delivery_delay_distributions,
+)
 from .delivery import (
     DeliveryAnalyticsError,
     ObservationWindow,
@@ -34,12 +45,20 @@ from .unclaimed import (
 )
 
 __all__ = [
+    "DEFAULT_CORRIDOR_KEY",
+    "DEFAULT_DELAY_BUCKETS_SECONDS",
+    "DEFAULT_PROGRAM_KEY",
+    "UNKNOWN_DIMENSION",
     "AgingBucketSummary",
     "AssetCashoutRate",
+    "AssetDelaySummary",
     "CashoutAnalyticsError",
     "CashoutReport",
     "CohortReadiness",
     "DeliveryAnalyticsError",
+    "DeliveryDelayDistribution",
+    "DeliveryDelayError",
+    "DeliveryDelayReport",
     "ObservationWindow",
     "ReceiptMatch",
     "TimeToReceiptMetrics",
@@ -49,6 +68,7 @@ __all__ = [
     "UnclaimedBalance",
     "UnclaimedFundsError",
     "UnclaimedFundsReport",
+    "compute_delivery_delay_distributions",
     "compute_realized_cashout_rates",
     "compute_time_to_receipt_metrics",
     "compute_trustline_readiness_rates",
