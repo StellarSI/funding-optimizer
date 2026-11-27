@@ -1,8 +1,20 @@
-﻿"""Delivery analytics.
+"""Delivery analytics.
 
 The optimizer recommends allocations and never signs or submits payouts.
 """
 
+from .aggregates import (
+    DEFAULT_COHORT_KEY,
+    DEFAULT_PROGRAM_KEY,
+    DEFAULT_REGION_KEY,
+    AggregateMetrics,
+    AggregateReport,
+    DeliveryAggregatesError,
+    compute_delivery_aggregates,
+)
+from .aggregates import (
+    ObservationWindow as AggregateObservationWindow,
+)
 from .cashout import (
     AssetCashoutRate,
     CashoutAnalyticsError,
@@ -12,7 +24,6 @@ from .cashout import (
 from .delays import (
     DEFAULT_CORRIDOR_KEY,
     DEFAULT_DELAY_BUCKETS_SECONDS,
-    DEFAULT_PROGRAM_KEY,
     UNKNOWN_DIMENSION,
     AssetDelaySummary,
     DeliveryDelayDistribution,
@@ -45,16 +56,22 @@ from .unclaimed import (
 )
 
 __all__ = [
+    "DEFAULT_COHORT_KEY",
     "DEFAULT_CORRIDOR_KEY",
     "DEFAULT_DELAY_BUCKETS_SECONDS",
     "DEFAULT_PROGRAM_KEY",
+    "DEFAULT_REGION_KEY",
     "UNKNOWN_DIMENSION",
+    "AggregateMetrics",
+    "AggregateObservationWindow",
+    "AggregateReport",
     "AgingBucketSummary",
     "AssetCashoutRate",
     "AssetDelaySummary",
     "CashoutAnalyticsError",
     "CashoutReport",
     "CohortReadiness",
+    "DeliveryAggregatesError",
     "DeliveryAnalyticsError",
     "DeliveryDelayDistribution",
     "DeliveryDelayError",
@@ -68,6 +85,7 @@ __all__ = [
     "UnclaimedBalance",
     "UnclaimedFundsError",
     "UnclaimedFundsReport",
+    "compute_delivery_aggregates",
     "compute_delivery_delay_distributions",
     "compute_realized_cashout_rates",
     "compute_time_to_receipt_metrics",
