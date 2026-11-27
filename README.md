@@ -262,6 +262,31 @@ only binding constraints move the objective when perturbed. Perturbations
 that become infeasible (for example floors summing over 100% of the budget)
 are reported with `success=False` and a diagnostic instead of raising.
 
+## Scenario simulation
+
+Scenarios are versioned, validated documents under
+`funding_optimizer/scenarios`. They capture a budget, assumptions and the
+model versions a forecast came from, and never execute a solve:
+
+```python
+from funding_optimizer.scenarios import parse_scenario
+
+scenario = parse_scenario({
+    "version": 1,
+    "id": "baseline-2026",
+    "name": "Baseline 2026",
+    "budgets": {"USDC": 150_000, "XLM": 40_000_000},
+    "assumptions": {"cashout_rate": 0.82},
+    "model_versions": {"forecast": "v2.1"},
+    "seed": 42,
+})
+print(scenario.fingerprint())  # stable for the same document and seed
+```
+
+Validation rejects unsupported versions, malformed budgets, non-scalar
+assumptions and unknown fields. The optimizer still only recommends
+allocations — it never signs or submits payouts.
+
 ## Delivery analytics
 
 `funding_optimizer/analytics` measures what happened after funds were
