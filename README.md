@@ -281,6 +281,11 @@ signs or submits payouts.
   receipt, recipient and amount totals by program, region, cohort and asset,
   with amounts kept separate per asset. The three grouping keys default to
   `program`, `region` and `cohort` in event metadata and are configurable.
+- `compute_delivery_delay_distributions` (issue #39) summarizes matched
+  delivery delays in seconds by corridor and program, with percentiles, a
+  histogram and a per-asset breakdown. Corridor and program come from event
+  metadata (`corridor` and `program` by default; missing values read
+  `unknown`).
 
 ```python
 from funding_optimizer.analytics import (

@@ -1,0 +1,86 @@
+[
+  {
+    "event_id": "d1",
+    "source": "horizon",
+    "occurred_at": "2026-01-01T00:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC",
+    "amount": 100.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GA",
+    "metadata": { "program": "cash-ng", "corridor": "US-KE" }
+  },
+  {
+    "event_id": "r1",
+    "source": "horizon",
+    "occurred_at": "2026-01-01T01:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC",
+    "amount": 100.0,
+    "direction": "in",
+    "account": "GA",
+    "counterparty": "GFUND",
+    "metadata": { "program": "cash-ng", "corridor": "US-KE" }
+  },
+  {
+    "event_id": "d2",
+    "source": "horizon",
+    "occurred_at": "2026-01-02T00:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC",
+    "amount": 50.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GB",
+    "metadata": { "program": "cash-ng", "corridor": "US-KE" }
+  },
+  {
+    "event_id": "r2",
+    "source": "horizon",
+    "occurred_at": "2026-01-02T06:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC",
+    "amount": 50.0,
+    "direction": "in",
+    "account": "GB",
+    "counterparty": "GFUND",
+    "metadata": { "program": "cash-ng", "corridor": "US-KE" }
+  },
+  {
+    "event_id": "d3",
+    "source": "horizon",
+    "occurred_at": "2026-01-03T00:00:00Z",
+    "event_type": "payment",
+    "asset": "XLM",
+    "amount": 1000.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GC",
+    "metadata": { "program": "edu-ke", "corridor": "EU-NG" }
+  },
+  {
+    "event_id": "r3",
+    "source": "horizon",
+    "occurred_at": "2026-01-03T00:30:00Z",
+    "event_type": "payment",
+    "asset": "XLM",
+    "amount": 1000.0,
+    "direction": "in",
+    "account": "GC",
+    "counterparty": "GFUND",
+    "metadata": { "program": "edu-ke", "corridor": "EU-NG" }
+  },
+  {
+    "event_id": "d4",
+    "source": "horizon",
+    "occurred_at": "2026-01-04T00:00:00Z",
+    "event_type": "payment",
+    "asset": "USDC",
+    "amount": 25.0,
+    "direction": "out",
+    "account": "GFUND",
+    "counterparty": "GD",
+    "metadata": { "program": "cash-ng", "corridor": "US-KE" }
+  }
+]
