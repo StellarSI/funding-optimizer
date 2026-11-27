@@ -1,4 +1,4 @@
-﻿"""Delivery analytics.
+"""Delivery analytics.
 
 The optimizer recommends allocations and never signs or submits payouts.
 """
@@ -24,7 +24,6 @@ from .cashout import (
 from .delays import (
     DEFAULT_CORRIDOR_KEY,
     DEFAULT_DELAY_BUCKETS_SECONDS,
-    DEFAULT_PROGRAM_KEY,
     UNKNOWN_DIMENSION,
     AssetDelaySummary,
     DeliveryDelayDistribution,
@@ -58,14 +57,14 @@ from .unclaimed import (
 
 __all__ = [
     "DEFAULT_COHORT_KEY",
+    "DEFAULT_CORRIDOR_KEY",
+    "DEFAULT_DELAY_BUCKETS_SECONDS",
     "DEFAULT_PROGRAM_KEY",
     "DEFAULT_REGION_KEY",
+    "UNKNOWN_DIMENSION",
     "AggregateMetrics",
     "AggregateObservationWindow",
     "AggregateReport",
-    "DEFAULT_CORRIDOR_KEY",
-    "DEFAULT_DELAY_BUCKETS_SECONDS",
-    "UNKNOWN_DIMENSION",
     "AgingBucketSummary",
     "AssetCashoutRate",
     "AssetDelaySummary",
